@@ -6,19 +6,19 @@ struct ContentView: View {
 
     var body: some View {
         VStack {
-             Button(action: {
-                            if let url = URL(string: url) {
-                                UIApplication.shared.open(url)
-                            }
-                        }) {
-                            Text("Login with 42 credentials")
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(Color.blue)
-                                .foregroundColor(.white)
-                                .cornerRadius(8)
-                        }
-                        .padding()
+            Button(action: {
+                if let url = URL(string: url) {
+                    UIApplication.shared.open(url)
+                }
+            }) {
+                Text("Login with 42 credentials")
+                    .frame(maxWidth: .infinity)
+                    .padding()
+                    .background(Color.blue)
+                    .foregroundColor(.white)
+                    .cornerRadius(8)
+                }
+                .padding()
         }
         .onOpenURL { url in handleIncomingURL(url) }
     }
