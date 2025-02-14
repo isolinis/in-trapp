@@ -12,6 +12,16 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter android:label="IntraAuth Deep Linking">
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!-- Esquema y datos específicos del intent callback-->
+                <data
+                    android:scheme="intrap"
+                    android:host="auth"
+                    android:pathPrefix="/callback" />
+            </intent-filter>
         </activity>
     </application>
 </manifest> 
