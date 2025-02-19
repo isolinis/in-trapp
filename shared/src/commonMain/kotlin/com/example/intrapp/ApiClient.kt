@@ -2,38 +2,44 @@ package com.example.intrapp
 
 import io.ktor.client.*
 import io.ktor.client.request.*
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.*
+import io.ktor.http.*
 
 
 class ApiClient {
 
     private val client: HttpClient = HttpClient()
 
-    suspend fun post(url:String): HttpResponse? {
-
+    // Función para enviar solicitudes POST con body
+    suspend fun post(url: String, body: String): HttpResponse? {
         return try {
-            val response = client.post(url)
-            response
+            client.post(url) {
+                header(HttpHeaders.ContentType, ContentType.Application.FormUrlEncoded)
+                setBody(body)
+            }
         } catch (e: Exception) {
+            println("[ApiClient] Error en la solicitud POST: ${e.message}")
             null
-        } finally {
-            client.close()
         }
     }
+
+    // Función para enviar solicitudes GET con headers
     suspend fun get(url: String, headers: Map<String, String> = emptyMap()): HttpResponse? {
         return try {
-            val response = client.get(url) {
+            client.get(url) {
                 headers.forEach { (key, value) ->
                     this.headers.append(key, value)
                 }
             }
-            response
         } catch (e: Exception) {
+            println("[ApiClient] Error en la solicitud GET: ${e.message}")
             null
-        } finally {
-            client.close()
         }
     }
 
+    // Cierra el cliente cuando ya no sea necesario (opcional)
+    fun close() {
+        client.close()
+    }
 }
 

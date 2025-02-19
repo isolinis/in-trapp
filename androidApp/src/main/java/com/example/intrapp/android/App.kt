@@ -1,9 +1,11 @@
 package com.example.intrapp.android
 
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,38 +19,29 @@ import com.example.intrapp.Api42
 
 
 @Composable
-@Preview
 fun App() {
 
     val context = LocalContext.current
+
     MaterialTheme {
-
-        // VARIABLES OBSERVABLES:
-        // Remember mutablestateof : Estados que se vigilan y al cambiar se renderiza entera la view.
-        var uri by remember { mutableStateOf("") }
-        //var code by remember { mutableStateOf(false) }
-        //var profile by remember { mutableStateOf(false) }
-
-
-        // CUERPO :
-
-        Column(Modifier.fillMaxWidth().fillMaxHeight() , horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+        Column(
+            Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        )
+        {
             Button(onClick = {
-                uri = Api42().getURI()
-
-                ///DESDE AQUI
-
-                //aqui hay que traerse toda la logica se authintra
-                
-                ///HASTA AQUI
-
-
-
+                // Iniciar flujo OAuth
+                val url = Api42().getURI()
+                Log.d("App", "URI for Intent: $url")
+                val browserIntent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(url)
+                )
+                context.startActivity(browserIntent)
             }) {
                 Text("Log in with 42")
-
             }
-
         }
     }
 }

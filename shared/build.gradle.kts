@@ -32,6 +32,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.json)
             implementation(libs.ktor.client.serialization)
+
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.core)

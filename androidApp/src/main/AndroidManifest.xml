@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:allowBackup="false"
@@ -7,21 +8,21 @@
         android:theme="@style/AppTheme">
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask"> <!-- ¡Este atributo es crucial! -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-            <intent-filter android:label="IntraAuth Deep Linking">
+            <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Esquema y datos específicos del intent callback-->
                 <data
                     android:scheme="intrap"
                     android:host="auth"
-                    android:pathPrefix="/callback" />
+                    android:path="/callback" />
             </intent-filter>
         </activity>
     </application>
-</manifest> 
+</manifest>
