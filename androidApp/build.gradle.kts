@@ -45,4 +45,9 @@ dependencies {
 
     debugImplementation(libs.compose.ui.tooling)
 
+    implementation(libs.androidx.navigation.compose) // Para NavController
+    implementation(libs.androidx.lifecycle.viewmodel.compose) // Para ViewModel
+    implementation(libs.kotlinx.coroutines.core) // Para StateFlow y corrutinas
+
+
 }

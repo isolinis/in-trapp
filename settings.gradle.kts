@@ -12,6 +12,7 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+
 }
 
 rootProject.name = "intrapp"

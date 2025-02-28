@@ -15,7 +15,7 @@ kotlin {
             }
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -32,16 +32,13 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.json)
             implementation(libs.ktor.client.serialization)
-
+            implementation(libs.kotlinx.coroutines.core) // Para corrutinas
         }
         androidMain.dependencies {
-            implementation(libs.ktor.client.core)
             implementation(libs.ktor.client.android)
-            implementation(libs.ktor.client.json)
-            implementation(libs.ktor.client.serialization)
+            implementation(libs.androidx.lifecycle.viewmodel.compose) // Para ViewModel
         }
     }
-
 }
 
 android {
