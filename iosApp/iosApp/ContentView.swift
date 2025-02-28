@@ -2,7 +2,7 @@ import SwiftUI
 import shared
 
 struct ContentView: View {
-    @State private var url: String = Api42().getUri()
+    @State private var url: String = Api42().getURI()
 
     var body: some View {
         VStack {

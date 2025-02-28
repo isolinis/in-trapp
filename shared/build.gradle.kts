@@ -38,6 +38,9 @@ kotlin {
             implementation(libs.ktor.client.android)
             implementation(libs.androidx.lifecycle.viewmodel.compose) // Para ViewModel
         }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin) // Motor HTTP para iOS
+        }
     }
 }
 
