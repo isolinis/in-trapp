@@ -49,5 +49,5 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose) // Para ViewModel
     implementation(libs.kotlinx.coroutines.core) // Para StateFlow y corrutinas
 
-
+    implementation(libs.coil.compose)
 }
