@@ -3,7 +3,7 @@ package com.example.intrapp.android
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import androidx.compose.foundation.Image
+import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -11,9 +11,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -34,13 +36,21 @@ import com.example.intrapp.android.ProfileViewModel
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
+
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
+import androidx.media3.common.MediaItem
+import androidx.media3.common.Player
+
+
 
 @Composable
 fun App(viewModel: ProfileViewModel) {
@@ -67,7 +77,7 @@ fun App(viewModel: ProfileViewModel) {
     }
 
     // 5. Configurar NavHost
-    NavHost(navController, startDestination = "loading") {
+    NavHost(navController, startDestination = "login") {
         composable("loading") {
             LoadingScreen() // Pantalla de carga
         }
@@ -84,33 +94,85 @@ fun App(viewModel: ProfileViewModel) {
 fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
     val context = LocalContext.current
 
-    MaterialTheme {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(220.dp)
-                    .background(Color.Gray, CircleShape)
-                    .clip(CircleShape)
-            ) {
-                // Imagen
+    var videoFinished by remember { mutableStateOf(false) }
 
+    // ExoPlayer for video
+    val exoPlayer = remember {
+        ExoPlayer.Builder(context).build().apply {
+            val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.animacion}")
+            val mediaItem = MediaItem.fromUri(videoUri)
+            setMediaItem(mediaItem)
+            repeatMode = ExoPlayer.REPEAT_MODE_OFF // Desactivar el bucle
+            prepare()
+            play()
+        }
+    }
+
+    // Detener el video en el último frame
+    LaunchedEffect(exoPlayer) {
+        exoPlayer.addListener(object : Player.Listener {
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                if (playbackState == Player.STATE_ENDED) {
+                    // Cuando el video termina, actualizamos el estado
+                    videoFinished = true
+                }
             }
+        })
+    }
 
-            Spacer(modifier = Modifier.height(50.dp))
+    // Liberar el ExoPlayer cuando la pantalla se destruya
+    DisposableEffect(Unit) {
+        onDispose {
+            exoPlayer.release()
+        }
+    }
+    MaterialTheme {
 
-
-            Button(onClick = {
-                // Iniciar flujo OAuth
-                val url = Api42().getURI()
-                Log.d("App", "URI for Intent: $url")
-                val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                context.startActivity(browserIntent)
-            }) {
-                Text("Log in with 42")
+        //FONDO
+        // Reproducir el video de fondo
+        AndroidView(
+            factory = { context ->
+                PlayerView(context).apply {
+                    player = exoPlayer
+                    useController = false // Ocultar controles de reproducción
+                    layoutParams = ViewGroup.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxSize()
+        )
+        if (videoFinished) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.BottomEnd // Alinear en la esquina inferior derecha
+            ) {
+                Button(onClick = {
+                    // Iniciar flujo OAuth
+                    val url = Api42().getURI()
+                    Log.d("App", "URI for Intent: $url")
+                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                    context.startActivity(browserIntent)
+                },
+                    modifier = Modifier
+                        .size(100.dp)
+                        .align(Alignment.BottomEnd)
+                        .offset(x = (-16).dp, y = (-150).dp), // Ajustar la posición
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color.Black
+                    )
+                ) {
+                    Text(
+                        text = "LOG\nIN",
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                        fontFamily = FontFamily.SansSerif,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
             }
         }
     }

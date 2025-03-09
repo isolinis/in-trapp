@@ -50,4 +50,6 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core) // Para StateFlow y corrutinas
 
     implementation(libs.coil.compose)
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
 }
