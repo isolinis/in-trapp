@@ -12,10 +12,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -49,8 +52,9 @@ import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import java.io.File
 
-
+//-------------------------//APP NAVEGADOR//---------------------------//
 
 @Composable
 fun App(viewModel: ProfileViewModel) {
@@ -90,16 +94,47 @@ fun App(viewModel: ProfileViewModel) {
     }
 }
 
+//-------------------------//REPRODUCTOR DE VIDEO DE FONDO//---------------------------//
+
 @Composable
-fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
+fun VideoPlayer(
+    videoFileName: String,
+    modifier: Modifier = Modifier,
+    onVideoFinished: () -> Unit = {} // Callback cuando el video termina
+) {
     val context = LocalContext.current
 
-    var videoFinished by remember { mutableStateOf(false) }
 
-    // ExoPlayer for video
+    //NO ENCUETRA EL INPUTSTREAM
+
+
+    // Cargar el video desde shared
+
+    val inputStream = context.assets.open("videos/$videoFileName")
+
+    Log.d("VIDEO", "INPUT $videoFileName")
+
+    // Obtener su URI (
+    val videoUri = remember {
+
+        if (inputStream != null) {
+            // Video en un archivo temp (Por que está en commonMain/assets hace falta temp)
+            val tempFile = File.createTempFile("video", ".mp4", context.cacheDir)
+
+            tempFile.outputStream().use { output ->
+                inputStream.copyTo(output)
+            }
+            Log.d("VIDEO", "Uri OK")
+            Uri.fromFile(tempFile)
+        } else {
+            Log.d("VIDEO", "URI Empty")
+            Uri.EMPTY //Por si no encuentra el recurso
+        }
+    }
+
+    // ExoPlayer para reproducir el video
     val exoPlayer = remember {
         ExoPlayer.Builder(context).build().apply {
-            val videoUri = Uri.parse("android.resource://${context.packageName}/${R.raw.animacion}")
             val mediaItem = MediaItem.fromUri(videoUri)
             setMediaItem(mediaItem)
             repeatMode = ExoPlayer.REPEAT_MODE_OFF // Desactivar el bucle
@@ -113,65 +148,91 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
         exoPlayer.addListener(object : Player.Listener {
             override fun onPlaybackStateChanged(playbackState: Int) {
                 if (playbackState == Player.STATE_ENDED) {
-                    // Cuando el video termina, actualizamos el estado
-                    videoFinished = true
+                    // Cuando el video termina, llamamos al callback
+                    onVideoFinished()
                 }
             }
         })
     }
 
-    // Liberar el ExoPlayer cuando la pantalla se destruya
+    // Liberar el ExoPlayer cuando el componente se destruya
     DisposableEffect(Unit) {
         onDispose {
             exoPlayer.release()
         }
     }
+
+    // Reproducir el video de fondo
+    AndroidView(
+        factory = { context ->
+            PlayerView(context).apply {
+                player = exoPlayer
+                useController = false // Ocultar controles de reproducción
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                )
+            }
+        },
+        modifier = modifier.fillMaxSize()
+    )
+}
+
+//-------------------------//SCREENS//---------------------------//
+
+@Composable
+fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
+
+    val context = LocalContext.current
+    var videoFinished by remember { mutableStateOf(false) }
+
     MaterialTheme {
 
-        //FONDO
-        // Reproducir el video de fondo
-        AndroidView(
-            factory = { context ->
-                PlayerView(context).apply {
-                    player = exoPlayer
-                    useController = false // Ocultar controles de reproducción
-                    layoutParams = ViewGroup.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.MATCH_PARENT
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxSize()
-        )
-        if (videoFinished) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.BottomEnd // Alinear en la esquina inferior derecha
-            ) {
-                Button(onClick = {
-                    // Iniciar flujo OAuth
-                    val url = Api42().getURI()
-                    Log.d("App", "URI for Intent: $url")
-                    val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-                    context.startActivity(browserIntent)
-                },
-                    modifier = Modifier
-                        .size(100.dp)
-                        .align(Alignment.BottomEnd)
-                        .offset(x = (-16).dp, y = (-150).dp), // Ajustar la posición
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color.Black
-                    )
+        //VIDEO FONDO // Usa el @componente VideoPlayer
+
+        Box(modifier = Modifier.fillMaxSize()) {
+
+            VideoPlayer(
+                videoFileName = "loginvideo.mp4", // Nombre del archivo de video
+                onVideoFinished = { videoFinished = true } // Callback cuando el video termina
+            )
+            if (videoFinished) {
+
+                //BOTON
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.BottomEnd // Alinear en la esquina inferior derecha
                 ) {
-                    Text(
-                        text = "LOG\nIN",
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        fontFamily = FontFamily.SansSerif,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Button(
+                        onClick = {
+                            // Navegar a la pantalla de carga
+                            navController.navigate("loading")
+                            // Iniciar flujo OAuth
+                            val url = Api42().getURI()
+                            Log.d("App", "URI for Intent: $url")
+                            val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+                            context.startActivity(browserIntent)
+                        },
+                        modifier = Modifier
+                            .size(100.dp)
+                            .align(Alignment.BottomEnd)
+                            .offset(x = (-16).dp, y = (-150).dp), // Ajustar la posición
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Yellow
+                        )
+                    ) {
+                        Text(
+                            text = "LOG\nIN",
+                            color = Color.Black,
+                            textAlign = TextAlign.Center,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            fontFamily = FontFamily.SansSerif,
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .wrapContentSize(Alignment.Center)
+                        )
+                    }
                 }
             }
         }
@@ -180,10 +241,14 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 
 @Composable
 fun ProfileScreen(viewModel: ProfileViewModel) {
-    // Observar el estado de autenticación, y otras variables que luego vengan ( nombre, email, avatar)
-    val profile by viewModel.profile.collectAsState()
 
-    // Definir un TextStyle personalizado
+    val profile by viewModel.profile.collectAsState()// Observar el estado de autenticación
+    val context = LocalContext.current
+    var videoFinished by remember { mutableStateOf(false) } // Observar reproduccion del video
+
+
+    //STYLES // Definir un TextStyle personalizado
+
     val profileTextStyle = TextStyle(
         color = Color.White,
         fontSize = 18.sp,
@@ -193,19 +258,32 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
     )
 
     MaterialTheme {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
 
-            // AVATAR
-            Box(
-                modifier = Modifier
-                    .size(220.dp)
-                    .background(Color.Gray, CircleShape)
-                    .clip(CircleShape)
-            ) {
+        //VIDEO FONDO // Usa el @componente VideoPlayer
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            // Usar el componente VideoPlayer
+            VideoPlayer(
+                videoFileName = "profilevideo.mp4", // Nombre del archivo de video
+                onVideoFinished = { videoFinished = true } // Callback cuando el video termina
+            )
+
+            if (videoFinished) {
+                Column(
+                    modifier = Modifier.fillMaxSize(),//.background(Color.Black),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+
+                ) {
+
+                // AVATAR
+                Box(
+                    modifier = Modifier
+                        .size(220.dp)
+                        .background(Color.Yellow, CircleShape)
+                        .clip(CircleShape)
+                        .background(Color.Black)
+                ) {
                 // Imagen
                 AsyncImage(
                     model = profile!!.image?.link,
@@ -236,35 +314,29 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
                 text = " ${profile!!.first_name} ${profile!!.last_name} ",
                 style = profileTextStyle
             )
-            Text(
-                text = "email: ${profile!!.email}",
-                style = profileTextStyle
-            )
+            Text(text = "email: ${profile!!.email}", style = profileTextStyle)
             Text(
                 text = "Location: ${profile!!.location ?: "No available"}",
                 style = profileTextStyle
             )
-            Text(
-                text = "Wallet: ${profile!!.wallet}",
-                style = profileTextStyle
-            )
+            Text(text = "Wallet: ${profile!!.wallet}", style = profileTextStyle)
 
             Spacer(modifier = Modifier.height(50.dp))
 
             // PROJECTS
 
             Button(onClick = {
-                //Aqui no se si desplegar otra screeen de projects,
+                //Aqui desplegar otra screeen de projects,
                 // para ello si usar otra variable observable o simeplemtne por click
                 //val projects  = Api42().getProjects()
                 //LANZAR LA PETICION A LA API deberia hacerlo el viewmodel , y otro objeto ???
             }) {
                 Text("PROJECTS")
             }
-
-
+            }
         }
     }
+}
 }
 
 @Composable
@@ -272,18 +344,13 @@ fun LoadingScreen() {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White), // Fondo blanco (puedes cambiarlo)
+            .background(Color.Yellow),
         contentAlignment = Alignment.Center
     ) {
-        Text(
-            text = "CARGANDO",
-            color = Color.White,
-            fontSize = 25.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Default,
-            letterSpacing = 0.5.sp
+        CircularProgressIndicator(
+            color = Color.Black, // Color del indicador
+            modifier = Modifier.size(100.dp) // Tamaño del indicador
         )
-        // Puedes usar un indicador de progreso o una animación
-        //CircularProgressIndicator(color = Color.Blue) // Indicador de carga circular
+
     }
 }
