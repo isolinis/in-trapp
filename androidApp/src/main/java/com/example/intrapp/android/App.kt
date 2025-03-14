@@ -89,7 +89,10 @@ fun App(viewModel: ProfileViewModel) {
             LoginScreen(navController, viewModel)
         }
         composable("profile") {
-            ProfileScreen(viewModel)
+            ProfileScreen(navController, viewModel)
+        }
+        composable("projects") {
+            ProjectsScreen(navController, viewModel)
         }
     }
 }
@@ -240,9 +243,10 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 }
 
 @Composable
-fun ProfileScreen(viewModel: ProfileViewModel) {
+fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 
     val profile by viewModel.profile.collectAsState()// Observar el estado de autenticación
+    val projects by viewModel.projects.collectAsState() // Observar el estado de los proyectos
     val context = LocalContext.current
     var videoFinished by remember { mutableStateOf(false) } // Observar reproduccion del video
 
@@ -261,14 +265,15 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
 
         //VIDEO FONDO // Usa el @componente VideoPlayer
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
             // Usar el componente VideoPlayer
-            VideoPlayer(
-                videoFileName = "profilevideo.mp4", // Nombre del archivo de video
-                onVideoFinished = { videoFinished = true } // Callback cuando el video termina
-            )
+            //VideoPlayer(
+            //    videoFileName = "profilevideo.mp4", // Nombre del archivo de video
+            //    onVideoFinished = { videoFinished = true } // Callback cuando el video termina
+            //)
 
-            if (videoFinished) {
+            //if (videoFinished) {
+
                 Column(
                     modifier = Modifier.fillMaxSize(),//.background(Color.Black),
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -326,14 +331,29 @@ fun ProfileScreen(viewModel: ProfileViewModel) {
             // PROJECTS
 
             Button(onClick = {
-                //Aqui desplegar otra screeen de projects,
-                // para ello si usar otra variable observable o simeplemtne por click
-                //val projects  = Api42().getProjects()
-                //LANZAR LA PETICION A LA API deberia hacerlo el viewmodel , y otro objeto ???
-            }) {
-                Text("PROJECTS")
+                // Navegar a la pantalla de carga
+                //navController.navigate("loading")
+                viewModel.loadProjects()
+                navController.navigate("projects")
+            },
+                modifier = Modifier
+                    .size(100.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Yellow
+                )
+                ) {
+                Text(
+                    text= "PROJECTS",
+                    color = Color.Black,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 10.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .wrapContentSize(Alignment.Center))
             }
-            }
+            //}
         }
     }
 }
@@ -354,3 +374,58 @@ fun LoadingScreen() {
 
     }
 }
+
+@Composable
+fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
+    val projects by viewModel.projects.collectAsState()
+    val profile by viewModel.profile.collectAsState()
+
+    MaterialTheme {
+
+        //VIDEO FONDO // Usa el @componente VideoPlayer
+
+        Box(modifier = Modifier.fillMaxSize().background(Color.Yellow)) {
+            // Usar el componente VideoPlayer??
+
+
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+
+            ) {
+                if (projects == null) {
+                    Text(color = Color.Black,text ="Proyectos: ${profile!!.projects}\"")
+                } else {
+                    Text("Proyectos no encontrados")
+                }
+            }
+            // PROJECTS
+
+            Button(onClick = {
+                // Navegar atras
+                navController.navigate("profile")
+            },
+                modifier = Modifier
+                    .size(50.dp)
+                    .align(Alignment.TopStart)
+                    .offset(30.dp, 50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color.Black
+                )
+            ) {
+                Text(
+                    text= "⬅",
+                    color = Color.Yellow,
+                    textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 30.sp,
+                    fontFamily = FontFamily.SansSerif,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .wrapContentSize(Alignment.Center))
+            }
+        }
+    }
+}
+

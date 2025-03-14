@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intrapp.Api42
+import com.example.intrapp.Project
 import com.example.intrapp.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,7 +21,9 @@ class ProfileViewModel : ViewModel() {
     private val _profileLoaded = MutableStateFlow(false)
     val profileLoaded: StateFlow<Boolean> = _profileLoaded
 
-
+    // Estado de los proyectos
+    private val _projects = MutableStateFlow<List<Project>?>(null)
+    val projects: StateFlow<List<Project>?> = _projects
 
     // Función para manejar el callback de OAuth
     fun handleAuthCallback(code: String) {
@@ -43,4 +46,19 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
+
+    // Función para cargar los proyectos
+    fun loadProjects() {
+        viewModelScope.launch {
+            try {
+                val projects = Api42().getProjects()
+                _projects.value = projects
+                _profile.value = _profile.value?.copy(projects = projects) // Actualiza UserProfile con projects
+                Log.d("ViewModel", "Proyectos cargados: ${projects.size}")
+            } catch (e: Exception) {
+                Log.d("ViewModel", "Error al cargar proyectos: ${e.message}")
+                _projects.value = null
+            }
+        }
+    }
 }

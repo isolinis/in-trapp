@@ -143,14 +143,22 @@ class Api42() {
         return userProfile
     }
 
-    suspend fun getProjects() : HttpResponse? {
+    suspend fun getProjects() : List<Project> {
         val response: HttpResponse? = ApiClient().get(
             url = "https://api.intra.42.fr/v2/users/$user_id/projects_users",
             headers = mapOf(
                 HttpHeaders.Authorization to "Bearer $access_token"
             )
         )
-        return response
+        if (response == null || response.status.value != 200) {
+            throw Exception("Error: No se pudieron obtener los proyectos")
+        }
+
+        val projectsJson = response.bodyAsText()
+        println("[API42] PROJECTS JSON: $projectsJson")
+        //Parsear Json a Modelo de datos
+        val projects = Json { ignoreUnknownKeys = true }.decodeFromString<List<Project>>(projectsJson)
+        return projects
     }
 }
 

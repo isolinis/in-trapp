@@ -18,9 +18,9 @@ data class UserProfile(
     var refreshToken: String = "",
 
 
-    //al principio estara vacia hasta que ejecute el click de projects y lo rellene.
+    var projects: List<Project> = emptyList()//al principio estara vacia hasta que ejecute el click de projects y lo rellene.
     //var evaluations
-    //var projects
+
 
 
 
