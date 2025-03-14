@@ -10,71 +10,48 @@ import kotlinx.serialization.json.jsonObject
 class Api42() {
 
     // Credenciales y URLs
-    private val client_id: String = "u-s4t2ud-77006aca79f5d7f31a8a47f1ee21aaae7419d2fe992e37ad80c1877ba879de6e"
+    private val client_id: String =
+        "u-s4t2ud-77006aca79f5d7f31a8a47f1ee21aaae7419d2fe992e37ad80c1877ba879de6e"
     private val redirect_uri: String = "intrap://auth/callback"
-    private val client_secret: String = "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"
-    private val uri: String = "https://api.intra.42.fr/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code"
-
-    // Tokens y datos de usuario (sera un objeto modelo en un futuro ? )
-    var access_token: String? = null
-    var refresh_token: String? = null
-    var user_id: String?  = null
+    private val client_secret: String =
+        "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"
+    private val uri: String =
+        "https://api.intra.42.fr/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code"
 
     //Devuelve URI de autorizacion de 42
-    fun getURI(): String{
+    fun getURI(): String {
         return uri
     }
 
     // Maneja el callback: intercambia el code por el token y obtiene el perfil
-    //Guarda token en la clase?? Y el profile??  (y devuelve?)
-    suspend fun handleCallback(code: String) : UserProfile {
+    suspend fun handleCallback(code: String) {
 
-        println("[API42] Iniciando manejo del callback con code: $code")
+        println("[API42] Handlecallback(code: $code)")
 
         //NECESITAMOS HACER LO DE LOS STATE , strings random para mas seguridad
         val state: String = ""
 
         try {
-            // Paso 1: Intercambiar el code por el token
-            val tokenResponse = exchangeCodeForToken(code)
-            if (tokenResponse == null) {
-                throw Exception("Error: No se pudo obtener el token")
-            }
 
-            // Paso 2: Obtener el perfil del usuario
-            val userProfile = getProfile()
-            return userProfile
+            // Paso 1: Intercambiar el code por el token // Rellena accessToken y refreshToken en SessionManager
+            exchangeCodeForToken(code)
 
-            // Paso 4: Obtener proyectos del usuario (MODELO?)
-            //val projectsResponse = getProjects()
-            //if (projectsResponse != null) {
-            //    val projectsBody = projectsResponse.bodyAsText()
-            //    println("[API42] Proyectos del usuario: $projectsBody")
-            //} else {
-            //    println("[API42] Error: No se pudieron obtener los proyectos")
-            //}
-
+            // Paso 2: Obtener el perfil del usuario // // Rellena Userprofile en SessionManager
+            getProfile()
 
 
         } catch (e: Exception) {
-            // Limpiar tokens en caso de error
-            access_token = null
-            refresh_token = null
-            user_id = null
+            //limpiar Sessionmanager ???
 
             // Log del error
             println("[API42] Error en handleCallback: ${e.message}")
-            throw e // Relanzar la excepción para que el caller la maneje
+            throw e
         }
     }
 
 
-
-
-
-
     // Intercambia el code por el token de acceso
-    private suspend fun exchangeCodeForToken(code: String): HttpResponse? {
+    private suspend fun exchangeCodeForToken(code: String) {
         val url = "https://api.intra.42.fr/oauth/token"
         val body = "grant_type=authorization_code" +
                 "&client_id=$client_id" +
@@ -82,31 +59,26 @@ class Api42() {
                 "&code=$code" +
                 "&redirect_uri=$redirect_uri"
 
-        println("[API42] POST: $url")
-        println("[API42] Body: $body")
+        //println("[API42] POST: $url")
+        //println("[API42] Body: $body")
 
-        return try {
-            val response = ApiClient().post(url, body)
-            println("[API42] RESPONSE: ${response?.status?.value}")
+        val response = ApiClient().post(url, body)
+        println("[API42] exchangeCodeForToken() RESPONSE: ${response?.status?.value}")
 
-            if (response?.status?.value == 200) {
-                val bodyText = response.bodyAsText()
-                val jsonObject = Json.parseToJsonElement(bodyText).jsonObject
+        if (response?.status?.value == 200) {
+            val bodyText = response.bodyAsText()
+            val jsonObject = Json.parseToJsonElement(bodyText).jsonObject
 
-                access_token = jsonObject["access_token"]?.toString()?.replace("\"", "")
-                refresh_token = jsonObject["refresh_token"]?.toString()?.replace("\"", "")
+            // Almacenar tokens en SessionManager
+            SessionManager.access_token = jsonObject["access_token"]?.toString()?.replace("\"", "")
+            SessionManager.refresh_token =
+                jsonObject["refresh_token"]?.toString()?.replace("\"", "")
 
-                println("[API42] Access Token: $access_token")
-                println("[API42] Refresh Token: $refresh_token")
+            println("[API42]exchangeCodeForToken() = Access Token: ${SessionManager.access_token}")
+            println("[API42]exchangeCodeForToken() = Refresh Token: ${SessionManager.refresh_token}")
 
-                response
-            } else {
-                println("[API42] Error en la respuesta: Código de estado ${response?.status?.value}")
-                null
-            }
-        } catch (e: Exception) {
-            println("[API42] Error en exchangeCodeForToken: ${e.message}")
-            null
+        } else {
+            throw Exception("Error en la respuesta: Código de estado ${response?.status?.value}")
         }
     }
 
@@ -118,11 +90,14 @@ class Api42() {
         }
     }
 
-    suspend fun getProfile() : UserProfile {
+    suspend fun getProfile() {
+
+        val token = SessionManager.access_token ?: throw Exception("Access token no disponible")
+
         val response: HttpResponse? = ApiClient().get(
             url = "https://api.intra.42.fr/v2/me",
             headers = mapOf(
-                HttpHeaders.Authorization to "Bearer $access_token"
+                HttpHeaders.Authorization to "Bearer $token"
             )
         )
         if (response == null || response.status.value != 200) {
@@ -131,148 +106,56 @@ class Api42() {
 
         // Parsear el JSON a UserProfile
         val profileJson = response.bodyAsText()
-        println("[API42] USER PROFILE JSON: $profileJson")
+        println("[API42] getProfile() = USER PROFILE JSON: $profileJson")
 
-        //Parsear a modelo de datos tipo UseProfile y añadir los access token
-        //val userProfile = Json.decodeFromString<UserProfile>(profileJson)
-        val userProfile = Json { ignoreUnknownKeys = true }.decodeFromString<UserProfile>(profileJson) // Ignora las claves que no están en el modelo
-        userProfile.accessToken = access_token ?: throw Exception("Access token no disponible")
-        userProfile.refreshToken = refresh_token ?: throw Exception("Refresh token no disponible")
+        //Parsear a modelo de datos tipo UseProfile y Almacenar en SessionManager
 
-        println("[API42] USER PROFILE MODEL: ${userProfile.id}, ${userProfile.login}, ${userProfile.email}, ${userProfile.location}, ${userProfile.wallet}\")")
-        return userProfile
+        val userProfile = Json {
+            ignoreUnknownKeys = true
+        }.decodeFromString<UserProfile>(profileJson) // Ignora las claves que no están en el modelo
+        SessionManager.userProfile = userProfile
+
+        println("[API42] getProfile() : USER PROFILE MODEL: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}\")")
+
     }
 
-    suspend fun getProjects() : List<Project> {
-        val response: HttpResponse? = ApiClient().get(
-            url = "https://api.intra.42.fr/v2/users/$user_id/projects_users",
-            headers = mapOf(
-                HttpHeaders.Authorization to "Bearer $access_token"
-            )
-        )
-        if (response == null || response.status.value != 200) {
-            throw Exception("Error: No se pudieron obtener los proyectos")
-        }
+    suspend fun getProjects() {
 
-        val projectsJson = response.bodyAsText()
-        println("[API42] PROJECTS JSON: $projectsJson")
-        //Parsear Json a Modelo de datos
-        val projects = Json { ignoreUnknownKeys = true }.decodeFromString<List<Project>>(projectsJson)
-        return projects
+        try {
+            // Verificar que el accessToken y el userProfile estén disponibles
+            val token = SessionManager.access_token ?: throw Exception("Access token no disponible")
+            val userId = SessionManager.userProfile?.id ?: throw Exception("User ID no disponible")
+
+            // Hacer la solicitud a la API
+            val response: HttpResponse? = ApiClient().get(
+                url = "https://api.intra.42.fr/v2/users/$userId/projects_users",
+                headers = mapOf(
+                    HttpHeaders.Authorization to "Bearer $token"
+                )
+            )
+
+            // Verificar la respuesta
+            if (response == null || response.status.value != 200) {
+                throw Exception("Error: No se pudieron obtener los proyectos (código de estado ${response?.status?.value})")
+            }
+
+            // Parsear el JSON a List<Project>
+            val projectsJson = response.bodyAsText()
+            println("[API42] getprojects() PROJECTS JSON: $projectsJson")
+            // Extraer solo los campos necesarios
+            val projects = Json { ignoreUnknownKeys = true }.decodeFromString<List<Project>>(projectsJson)
+
+            // Almacenar los proyectos en SessionManager - Userprofile - Projects
+            SessionManager.userProfile?.projects = projects
+
+            println("[API42] Proyectos cargados: ${projects.size}")
+
+        } catch (e: Exception) {
+            // Limpiar los proyectos en caso de error
+            SessionManager.userProfile?.projects = emptyList()
+
+            println("[API42] Proyectos no cargados : ${e.message}")
+            throw Exception("Error en getProjects: ${e.message}", e)
+        }
     }
 }
-
-//{
-//  "id": 1,
-//  "name": "Welcome, Cadet !",
-//  "description": "You have passed the C Piscine! Welcome to 42!",
-//  "tier": "none",
-//  "kind": "project",
-//  "visible": true,
-//  "image": "/uploads/achievement/image/1/PRO001.svg",
-//  "nbr_of_success": null,
-//  "users_url": "https://api.intra.42.fr/v2/achievements/1/users",
-//  "titles": [
-//    {
-//      "id": 906,
-//      "name": "#Creative %login"
-//    },
-//    {
-//      "id": 975,
-//      "name": "Enxaneta, Rebel, %login"
-//    }
-//  ],
-//  "titles_users": [
-//    {
-//      "id": 12163,
-//      "user_id": 89976,
-//      "title_id": 906,
-//      "selected": false,
-//      "created_at": "2022-06-07T09:31:39.969Z",
-//      "updated_at": "2022-10-28T20:50:03.010Z"
-//    },
-//    {
-//      "id": 19492,
-//      "user_id": 89976,
-//      "title_id": 975,
-//      "selected": true,
-//      "created_at": "2022-12-16T16:05:28.412Z",
-//      "updated_at": "2022-12-16T23:29:37.379Z"
-//    }
-//  ],
-//  "partnerships": [],
-//  "patroned": [],
-//  "patroning": [
-//    {
-//      "id": 2890,
-//      "user_id": 108388,
-//      "godfather_id": 89976,
-//      "ongoing": false,
-//      "created_at": "2022-04-11T10:05:26.718Z",
-//      "updated_at": "2022-04-11T10:05:27.096Z"
-//    },
-//    {
-//      "id": 2891,
-//      "user_id": 108391,
-//      "godfather_id": 89976,
-//      "ongoing": false,
-//      "created_at": "2022-04-11T10:05:27.782Z",
-//      "updated_at": "2022-04-11T10:05:28.278Z"
-//    },
-//    {
-//      "id": 2892,
-//      "user_id": 108394,
-//      "godfather_id": 89976,
-//      "ongoing": false,
-//      "created_at": "2022-04-11T10:05:28.795Z",
-//      "updated_at": "2022-04-11T10:05:29.258Z"
-//    },
-//    {
-//      "id": 2893,
-//      "user_id": 108405,
-//      "godfather_id": 89976,
-//      "ongoing": false,
-//      "created_at": "2022-04-11T10:05:29.706Z",
-//      "updated_at": "2022-04-11T10:05:31.471Z"
-//    }
-//  ],
-//  "expertises_users": [],
-//  "roles": [],
-//  "campus": [
-//    {
-//      "id": 40,
-//      "name": "Urduliz",
-//      "time_zone": "Europe/Madrid",
-//      "language": {
-//        "id": 11,
-//        "name": "Spanish",
-//        "identifier": "es",
-//        "created_at": "2019-08-09T15:14:32.544Z",
-//        "updated_at": "2025-03-04T12:39:48.116Z"
-//      },
-//      "users_count": 2193,
-//      "vogsphere_id": 32,
-//      "country": "Spain",
-//      "address": "Aita Gotzon Kalea 37",
-//      "zip": "48610",
-//      "city": "Urduliz",
-//      "website": "https://42urduliz.com/",
-//      "facebook": "",
-//      "twitter": "https://twitter.com/42UrdulizFTef",
-//      "active": true,
-//      "public": true,
-//      "email_extension": "42urduliz.com",
-//      "default_hidden_phone": true
-//    }
-//  ],
-//  "campus_users": [
-//    {
-//      "id": 81507,
-//      "user_id": 89976,
-//      "campus_id": 40,
-//      "is_primary": true,
-//      "created_at": "2021-06-07T10:36:54.272Z",
-//      "updated_at": "2021-06-07T10:36:54.272Z"
-//    }
-//  ]
-//}

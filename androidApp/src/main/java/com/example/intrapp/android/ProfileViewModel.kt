@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intrapp.Api42
 import com.example.intrapp.Project
+import com.example.intrapp.SessionManager
 import com.example.intrapp.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -13,34 +14,30 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel : ViewModel() {
 
-    //COntenido del perfil (podria sustituir a porofileloaded una vez que el modelo de datos sea correcto)
-    private val _profile = MutableStateFlow<UserProfile?>(null)
-    val profile: StateFlow<UserProfile?> = _profile
-
     // Estado de autenticación (false inicialmente)
     private val _profileLoaded = MutableStateFlow(false)
     val profileLoaded: StateFlow<Boolean> = _profileLoaded
 
-    // Estado de los proyectos
-    private val _projects = MutableStateFlow<List<Project>?>(null)
-    val projects: StateFlow<List<Project>?> = _projects
+    // Estado de carga de proyectos (false inicialmente)
+    private val _projectsLoaded = MutableStateFlow(false)
+    val projectsLoaded: StateFlow<Boolean> = _projectsLoaded
+
+
 
     // Función para manejar el callback de OAuth
     fun handleAuthCallback(code: String) {
         viewModelScope.launch {
             try {
-                // Obtener el perfil directamente como UserProfile
-                val profile = Api42().handleCallback(code)
+                println("[VIEWMODEL] HandleAuthcallback(code: $code)")
 
-                Log.d("ViewModel", "true")
-                _profile.value = profile
+                // Llamar a handleCallback
+                Api42().handleCallback(code)
                 _profileLoaded.value = true
 
-                println("ViewModel: ${profile.id}, ${profile.login}, ${profile.email}, ${profile.location}, ${profile.wallet}")
-
+                println("[VIEWMODEL]: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}")
 
             } catch (e: Exception) {
-                Log.d("ViewModel", "false")
+                println("[VIEWMODEL]: Error al cargar el perfil: $e")
                 _profileLoaded.value = false
             }
         }
@@ -51,13 +48,12 @@ class ProfileViewModel : ViewModel() {
     fun loadProjects() {
         viewModelScope.launch {
             try {
-                val projects = Api42().getProjects()
-                _projects.value = projects
-                _profile.value = _profile.value?.copy(projects = projects) // Actualiza UserProfile con projects
-                Log.d("ViewModel", "Proyectos cargados: ${projects.size}")
+                Api42().getProjects()
+                _projectsLoaded.value = true
+                Log.d("ViewModel", "[VIEWMODEL] Proyectos cargados: ${SessionManager.projects?.size}")
             } catch (e: Exception) {
-                Log.d("ViewModel", "Error al cargar proyectos: ${e.message}")
-                _projects.value = null
+                Log.d("ViewModel", "[VIEWMODEL] Error al cargar proyectos: ${e.message}")
+                _projectsLoaded.value = false
             }
         }
     }
