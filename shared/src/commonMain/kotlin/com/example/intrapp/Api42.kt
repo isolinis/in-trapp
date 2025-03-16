@@ -7,6 +7,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
 
+//@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
 class Api42() {
 
     // Credenciales y URLs
@@ -85,8 +86,14 @@ class Api42() {
     // Función wrapper para Swift que llama a HandleCallback
     @Throws(Throwable::class)
     fun handleCallbackWrapper(code: String) {
-        return runBlocking { // Crea un scope de corrutina
-            handleCallback(code) // Llama a la función suspendida
+        return runBlocking {
+            try {
+                handleCallback(code)
+            } catch (e: Exception) {
+                // Limpiar el estado en caso de error (Session manager)
+                SessionManager.clearSession()
+                throw e
+            }
         }
     }
 
@@ -158,4 +165,19 @@ class Api42() {
             throw Exception("Error en getProjects: ${e.message}", e)
         }
     }
+
+    // Función wrapper para Swift que llama a HandleCallback
+    @Throws(Throwable::class)
+    fun getProjectsWrapper() {
+        return runBlocking {
+            try {
+                getProjects()
+            } catch (e: Exception) {
+                SessionManager.userProfile?.projects = emptyList() //Limpiar projects en caso de error
+                throw e // Propagar el error
+            }
+        }
+    }
 }
+
+

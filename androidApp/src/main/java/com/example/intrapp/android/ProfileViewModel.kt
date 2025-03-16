@@ -14,11 +14,11 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel : ViewModel() {
 
-    // Estado de autenticación (false inicialmente)
+    // Estado de Perfil (false inicialmente)
     private val _profileLoaded = MutableStateFlow(false)
     val profileLoaded: StateFlow<Boolean> = _profileLoaded
 
-    // Estado de carga de proyectos (false inicialmente)
+    // Estado Proyectos (false inicialmente)
     private val _projectsLoaded = MutableStateFlow(false)
     val projectsLoaded: StateFlow<Boolean> = _projectsLoaded
 
@@ -58,3 +58,8 @@ class ProfileViewModel : ViewModel() {
         }
     }
 }
+
+
+/*
+viewModelScope.launch: Ejecuta el código en un coroutine ligado al ciclo de vida del ViewModel.
+ */

@@ -80,7 +80,10 @@ fun App(viewModel: ProfileViewModel) {
             navController.navigate("profile") {
                 popUpTo("loading") { inclusive = true } // Elimina la pantalla de loading del backstack
             }
-        } else {
+        }
+        //este cacho no tienen mucho sentido no? nunca va a pasar, se quedaria en loading eternamente  porque profileloaded no cambiaria su sestado
+        //CAMBIAR A MANEJO DE ERROR CON UN TIEMOUT O ERROR (MAS ABAJO)
+        else {
             navController.navigate("login") {
                 popUpTo("loading") { inclusive = true } // Elimina la pantalla de loading del backstack
             }
@@ -138,6 +141,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
                             // Iniciar flujo OAuth
                             val url = Api42().getURI()
                             Log.d("App", "URI for Intent: $url")
+                            // Abrir el navegador con la URL de OAuth
                             val browserIntent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
                             context.startActivity(browserIntent)
                         },
@@ -485,12 +489,56 @@ fun ProjectItem(project: Project) {
 //-------------------------//BOTONES//---------------------------//
 
 @Composable
-fun ButtonBack(Text){
+fun ButtonBack(){
     //Este es el de back, con la flechita que quiero que sea mas mona, (negro con flechita amarilla)
 }
 
 @Composable
-fun ButtonNext(Text){
+fun ButtonNext(){
     //Este es el de LOG IN y el de PROJECTS (amarillo y letrs negras )
 
 }
+
+
+
+///MANEJO DE ERROR EN AUTH:
+/* EN ProfileViewModel:
+private val _authError = MutableStateFlow<String?>(null)
+val authError: StateFlow<String?> = _authError
+
+fun handleAuthCallback(code: String) {
+    viewModelScope.launch {
+        try {
+            Api42().handleCallback(code)
+            _profileLoaded.value = true
+        } catch (e: Exception) {
+            _authError.value = e.message // Guardar el mensaje de error
+            _profileLoaded.value = false
+        }
+    }
+}
+
+EN App:
+val authError by viewModel.authError.collectAsState()
+
+LaunchedEffect(profileLoaded, authError) {
+    if (profileLoaded) {
+        navController.navigate("profile") {
+            popUpTo("loading") { inclusive = true }
+        }
+    } else if (authError != null) {
+        navController.navigate("login") {
+            popUpTo("loading") { inclusive = true }
+        }
+    }
+
+EN Loginscreen, mas bien en una nueva ErrorScreen (FUTUROOOOOOOOOO)
+val authError by viewModel.authError.collectAsState()
+
+if (authError != null) {
+    Text(
+        text = "Error: $authError",
+        color = Color.Red
+    )
+}
+ */

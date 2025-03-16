@@ -7,6 +7,7 @@ plugins {
 }
 
 kotlin {
+
     androidTarget {
         compilations.all {
             compileTaskProvider.configure {
@@ -25,7 +26,9 @@ kotlin {
         it.binaries.framework {
             baseName = "shared"
             isStatic = true
+            //export("com.example.intrapp.Api42")// Exportar la clase Api42 explícitamente
         }
+
     }
 
     sourceSets {
