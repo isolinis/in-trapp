@@ -41,6 +41,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.intrapp.Api42
 import com.example.intrapp.SessionManager
+import com.example.shared.VideoPlayer
 import com.example.intrapp.android.ProfileViewModel
 
 import androidx.compose.ui.graphics.Color
@@ -125,6 +126,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 
             VideoPlayer(
                 videoFileName = "loginvideo.mp4", // Nombre del archivo de video
+                modifier = Modifier, // Usa Modifier por defecto
                 onVideoFinished = { videoFinished = true } // Callback cuando el video termina
             )
             if (videoFinished) {
@@ -387,7 +389,7 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
 
 //-------------------------//REPRODUCTOR DE VIDEO DE FONDO//---------------------------//
 
-@Composable
+/*@Composable
 fun VideoPlayer(
     videoFileName: String,
     modifier: Modifier = Modifier,
@@ -462,7 +464,7 @@ fun VideoPlayer(
         },
         modifier = modifier.fillMaxSize()
     )
-}
+}*/
 
 //-------------------------//TARJETA DE PROYECTO//---------------------------//
 

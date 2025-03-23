@@ -15,7 +15,7 @@ class Api42() {
         "u-s4t2ud-77006aca79f5d7f31a8a47f1ee21aaae7419d2fe992e37ad80c1877ba879de6e"
     private val redirect_uri: String = "intrap://auth/callback"
     private val client_secret: String =
-        "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"
+        "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"
     private val uri: String =
         "https://api.intra.42.fr/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code"
 
