@@ -3,7 +3,6 @@ package com.example.intrapp.android
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
-import android.view.ViewGroup
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +41,6 @@ import androidx.navigation.compose.rememberNavController
 import com.example.intrapp.Api42
 import com.example.intrapp.SessionManager
 import com.example.shared.VideoPlayer
-import com.example.intrapp.android.ProfileViewModel
 
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -53,14 +51,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.exoplayer.ExoPlayer
-import androidx.media3.ui.PlayerView
 import coil.compose.AsyncImage
-import androidx.media3.common.MediaItem
-import androidx.media3.common.Player
 import com.example.intrapp.Project
-import java.io.File
 
 //-------------------------//APP NAVEGADOR//---------------------------//
 

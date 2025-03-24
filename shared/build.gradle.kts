@@ -1,9 +1,6 @@
-import com.android.build.api.dsl.AaptOptions
+import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
-import org.jetbrains.kotlin.gradle.targets.js.webpack.KotlinWebpackConfig
-import java.io.FileInputStream
-import java.util.Properties
+
 
 
 
@@ -12,6 +9,7 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
+    kotlin("plugin.serialization") version "2.0.0"
 }
 
 kotlin {
@@ -83,7 +81,7 @@ android {
     sourceSets {
         getByName("main") {
             assets.srcDirs("src/commonMain/resources")
-            res.srcDirs("src/androidMain/res")
+            //res.srcDirs("src/androidMain/res")
         }
     }
 
