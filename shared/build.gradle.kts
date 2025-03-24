@@ -24,17 +24,26 @@ kotlin {
         }
     }
 
-    listOf(
-        iosX64(),
-        iosArm64(),
-        iosSimulatorArm64()
-    ).forEach {
-        it.binaries.framework {
+    // Configuración moderna para iOS
+    listOf(iosX64(), iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
             baseName = "shared"
             isStatic = true
+            // Configuración esencial para recursos
+            binaryOptions.apply {
+                put("bundle_resources", "true")
+                put("exportCommonResources", "true")
+            }
         }
-
     }
+    targets.withType<org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget> {
+        binaries.all {
+            // Fuerza la inclusión del archivo específico
+            linkerOpts += "-resource-dir ${projectDir}/src/commonMain/resources"
+            linkerOpts += "-include-binary ${projectDir}/src/commonMain/resources/videos/loginvideo.mp4"
+        }
+    }
+
 
     sourceSets {
         val commonMain by getting {
@@ -62,6 +71,12 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.ktor.client.darwin) // Motor HTTP para iOS
+            implementation(compose.ui)
+            implementation(compose.foundation)
+            implementation(compose.runtime)
+            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3-native-mt")
+            implementation("org.jetbrains.kotlin:kotlin-stdlib")
+            implementation("org.jetbrains.kotlinx:atomicfu:0.23.1")
         }
 
 
@@ -95,4 +110,20 @@ compose {
         generateResClass = always // Genera la clase Res siempre
     }
 
+}
+// Solución alternativa para el error de sync
+tasks.named("syncComposeResourcesForIos") {
+    enabled = false // Desactiva la tarea problemática
+}
+
+// Crea una tarea alternativa para manejar recursos
+tasks.register("manualSyncComposeResources") {
+    dependsOn(":shared:linkDebugFrameworkIosArm64")
+    dependsOn(":shared:linkDebugFrameworkIosX64")
+    doLast {
+        copy {
+            from("src/iosMain/resources")
+            into("build/compose/ios")
+        }
+    }
 }

@@ -2,20 +2,18 @@ import SwiftUI
 import AVKit
 
 struct VideoPlayerView: UIViewControllerRepresentable {
-    var videoName: String // Nombre del video (sin extensión)
-    var onVideoFinished: () -> Void // Callback cuando el video termina
+    var videoName: String
+    var onVideoFinished: () -> Void
 
-    // Crear el AVPlayerViewController
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let controller = AVPlayerViewController()
+        controller.showsPlaybackControls = false
 
-        // Cargar el video desde el bundle de la aplicación
-        if let videoURL = Bundle.main.url(forResource: "videos/\(videoName)", withExtension: "mp4") {
-            print("Video cargado correctamente: \(videoURL)")
-            let player = AVPlayer(url: videoURL)
+        if let url = Bundle.main.url(forResource: videoName, withExtension: "mp4") {
+            let player = AVPlayer(url: url)
             controller.player = player
+            controller.videoGravity = .resizeAspectFill
 
-            // Observar cuando el video termine
             NotificationCenter.default.addObserver(
                 context.coordinator,
                 selector: #selector(Coordinator.videoDidFinish),
@@ -23,24 +21,18 @@ struct VideoPlayerView: UIViewControllerRepresentable {
                 object: player.currentItem
             )
 
-            // Reproducir el video automáticamente
             player.play()
-        } else {
-            print("Error: No se pudo cargar el video \(videoName).mp4")
         }
 
         return controller
     }
 
-    // Actualizar el UIViewController (no es necesario en este caso)
     func updateUIViewController(_ uiViewController: AVPlayerViewController, context: Context) {}
 
-    // Crear el coordinador para manejar notificaciones
     func makeCoordinator() -> Coordinator {
         Coordinator(onVideoFinished: onVideoFinished)
     }
 
-    // Coordinador para manejar notificaciones
     class Coordinator: NSObject {
         var onVideoFinished: () -> Void
 
@@ -48,9 +40,21 @@ struct VideoPlayerView: UIViewControllerRepresentable {
             self.onVideoFinished = onVideoFinished
         }
 
-        // Método que se llama cuando el video termina
         @objc func videoDidFinish() {
             onVideoFinished()
         }
+    }
+}
+
+struct VideoPlayerWrapper: View {
+    var videoName: String
+    var onVideoFinished: () -> Void
+
+    var body: some View {
+        VideoPlayerView(
+            videoName: videoName,
+            onVideoFinished: onVideoFinished
+        )
+        .edgesIgnoringSafeArea(.all)
     }
 }
