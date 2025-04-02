@@ -5,16 +5,15 @@ struct LoadingView: View {
     @Binding var navigationPath: NavigationPath
 
     var body: some View {
-        VStack {
+        ZStack {
+            // Fondo amarillo (#fffc00)
+            Color(red: 1.0, green: 0.988, blue: 0.0)
+                .edgesIgnoringSafeArea(.all)
+
+            // Indicador de progreso
             ProgressView()
-                .progressViewStyle(CircularProgressViewStyle(tint: .blue))
-                .scaleEffect(2)
-                .padding()
-
-            Text("Cargando...")
-                .font(.title2)
-                .padding()
-
+                .progressViewStyle(CircularProgressViewStyle(tint: .black))
+                .scaleEffect(2.5) // Tamaño similar a 100.dp en Android
         }
     }
 }

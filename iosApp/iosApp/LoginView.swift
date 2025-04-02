@@ -16,9 +16,8 @@ struct LoginView: View {
                 VideoPlayerController(
                     player: player,
                     onVideoFinished: {
-                        withAnimation(.easeInOut(duration: 0.5)) {
-                            showLoginButton = true
-                        }
+                        videoFinished = true
+                        showLoginButton = true
                     }
                 )
                 .edgesIgnoringSafeArea(.all)
@@ -34,7 +33,8 @@ struct LoginView: View {
                             startOAuthFlow()
                         }
                     )
-                    .transition(.opacity.combined(with: .scale))
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    .padding(.trailing, 10)
                     .padding(.bottom, 50)
                 }
             }
@@ -53,9 +53,13 @@ struct LoginView: View {
             return
         }
 
-        player = AVPlayer(url: url)
+        let asset = AVAsset(url: url)
+        let playerItem = AVPlayerItem(asset: asset)
+        player = AVPlayer(playerItem: playerItem)
         player?.isMuted = true
-        player?.actionAtItemEnd = .none
+
+        // Configurar para mantener el último frame al finalizar
+        player?.actionAtItemEnd = .pause
 
         NotificationCenter.default.addObserver(
             forName: .AVPlayerItemDidPlayToEndTime,
@@ -63,8 +67,7 @@ struct LoginView: View {
             queue: .main
         ) { _ in
             videoFinished = true
-            player?.seek(to: .zero)
-            player?.play() // Loop del video
+            showLoginButton = true
         }
 
         player?.play()
@@ -88,19 +91,16 @@ struct LoginButton: View {
     var body: some View {
         Button(action: action) {
             Text("LOG\nIN")
-                .font(.system(size: 24, weight: .bold))
+                .font(.system(size: 16, weight: .bold, design: .default))
                 .multilineTextAlignment(.center)
-                .frame(width: 200, height: 100)
-                .background(
-                    LinearGradient(
-                        colors: [.blue, .purple],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
+                .frame(width: 100, height: 100)
+                .background(Color(red: 1.0, green: 0.988, blue: 0.0))
+                .foregroundColor(.black)
+                .clipShape(Circle())
+                .overlay(
+                    Circle()
+                        .stroke(Color.black, lineWidth: 2)
                 )
-                .foregroundColor(.white)
-                .cornerRadius(15)
-                .shadow(radius: 10)
         }
     }
 }

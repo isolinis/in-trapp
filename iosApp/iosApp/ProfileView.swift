@@ -4,95 +4,95 @@ import shared
 struct ProfileView: View {
     @EnvironmentObject private var viewModel: ProfileViewModel
     @Binding var navigationPath: NavigationPath
-
-    // Obtener el perfil desde SessionManager
     let profile = SessionManager.shared.userProfile
 
+    // Definimos el estilo de texto para reutilizar
+    private let profileTextStyle = Font.system(size: 18)
+
     var body: some View {
-
-        //VIDEO DE FONDO ??
-
         ZStack {
-            Color.black.ignoresSafeArea() // Fondo negro
+            Color.black.ignoresSafeArea()
 
-            VStack(alignment: .center, spacing: 16) {
-                // AVATAR
-                ZStack {
-                    Circle()
-                        .fill(Color.yellow)
-                        .frame(width: 220, height: 220)
-
-                    if let imageUrl = profile?.image?.link, let url = URL(string: imageUrl) {
-                        AsyncImage(url: url) { phase in
-                            switch phase {
-                            case .success(let image):
-                                image
-                                    .resizable()
-                                    .scaledToFill()
-                                    .frame(width: 220, height: 220)
-                                    .clipShape(Circle())
-                            case .failure:
-                                Color.red // Muestra un color de error si la imagen no se carga
-                            case .empty:
-                                ProgressView() // Muestra un spinner mientras se carga la imagen
-                            @unknown default:
-                                EmptyView() // Manejo de casos no cubiertos
-                            }
-                        }
-                        .frame(width: 220, height: 220)
-                    } else {
-                        // Si no hay URL de imagen o es inválida, muestra un fallback
+            ScrollView {
+                VStack(alignment: .center, spacing: 16) {
+                    // AVATAR
+                    ZStack {
                         Circle()
-                            .fill(Color.gray)
+                            .fill(Color(red: 1.0, green: 0.988, blue: 0.0)) // #fffc00
                             .frame(width: 220, height: 220)
+
+                        if let imageUrl = profile?.image?.link, let url = URL(string: imageUrl) {
+                            AsyncImage(url: url) { phase in
+                                switch phase {
+                                case .success(let image):
+                                    image
+                                        .resizable()
+                                        .scaledToFill()
+                                        .frame(width: 220, height: 220)
+                                        .clipShape(Circle())
+                                case .failure:
+                                    Circle()
+                                        .fill(Color.gray)
+                                case .empty:
+                                    ProgressView()
+                                @unknown default:
+                                    EmptyView()
+                                }
+                            }
+                        } else {
+                            Circle()
+                                .fill(Color.gray)
+                        }
                     }
+                    .padding(.top, 40)
+
+                    // INFO
+                    if let profile = profile {
+                        Text(profile.login)
+                            .font(.system(size: 25, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 16)
+
+                        Text("\(profile.first_name ?? "") \(profile.last_name ?? "")")
+                            .font(profileTextStyle)
+                            .foregroundColor(.white)
+
+                        Text("email: \(profile.email)")
+                            .font(profileTextStyle)
+                            .foregroundColor(.white)
+
+                        Text("Location: \(profile.location ?? "No available")")
+                            .font(profileTextStyle)
+                            .foregroundColor(.white)
+
+                        Text("Wallet: \(profile.wallet)")
+                            .font(profileTextStyle)
+                            .foregroundColor(.white)
+                    }
+
+                    Spacer().frame(height: 50)
+
+                    // BOTÓN PROJECTS
+                    Button(action: {
+                        viewModel.loadProjects()
+                        navigationPath.append("projects")
+                    }) {
+                        Text("PROJECTS")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.black)
+                            .multilineTextAlignment(.center)
+                            .frame(width: 100, height: 100)
+                            .background(Color(red: 1.0, green: 0.988, blue: 0.0)) // #fffc00
+                            .clipShape(Circle())
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.black, lineWidth: 2)
+                            )
+                    }
+                    .padding(.bottom, 40)
                 }
-
-                // INFO
-                if let profile = profile {
-                    Text(profile.login)
-                        .font(.system(size: 25, weight: .bold))
-                        .foregroundColor(.white)
-
-                    Spacer().frame(height: 16) // Espaciador
-
-                    Text("\(profile.first_name ?? "") \((profile.last_name) ?? "")")
-                        .foregroundColor(.white)
-                        .font(.system(size: 18))
-
-                    Text("Email: \(profile.email )")
-                        .foregroundColor(.white)
-                        .font(.system(size: 18))
-
-                    Text("Location: \(profile.location ?? "No disponible")")
-                        .foregroundColor(.white)
-                        .font(.system(size: 18))
-
-                    Text("Wallet: \(profile.wallet)")
-                        .foregroundColor(.white)
-                        .font(.system(size: 18))
-                } else {
-                    Text("No profile data available")
-                        .foregroundColor(.white)
-                        .font(.system(size: 18))
-                }
-
-                Spacer().frame(height: 50) // Espaciador
-
-                // Botón de proyectos
-                Button(action: {
-                    //viewModel.loadProjects()
-                    navigationPath.append("projects")
-                }) {
-                    Text("PROJECTS")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.black)
-                        .frame(width: 100, height: 100)
-                        .background(Color.yellow)
-                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity) // Ocupa toda la pantalla
-            .padding() // Añade un padding general
         }
     }
 }

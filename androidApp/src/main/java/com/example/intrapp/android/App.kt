@@ -288,6 +288,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
         }
     }
 }
+    //Necesito un boton de LOG OUT
 }
 
 @Composable
@@ -372,7 +373,7 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
             }
         }
     }
-    //Necesito un boton de LOG OUT
+
 }
 
 
