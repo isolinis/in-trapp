@@ -4,6 +4,8 @@ import android.content.Intent
 import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -43,6 +48,7 @@ import com.example.intrapp.SessionManager
 import com.example.shared.VideoPlayer
 
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 
@@ -53,6 +59,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.intrapp.Project
+import kotlin.math.abs
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
 
 //-------------------------//APP NAVEGADOR//---------------------------//
 
@@ -96,6 +115,11 @@ fun App(viewModel: ProfileViewModel) {
         }
         composable("projects") {
             ProjectsScreen(navController, viewModel)
+        }
+        composable("selected_project") {
+            // Recuperamos el ID como un entero
+            val projectId = navController.previousBackStackEntry?.savedStateHandle?.get<Int>("projectId") ?: -1
+            SelectedProjectScreen(navController, projectId)
         }
     }
 }
@@ -259,7 +283,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 
             Spacer(modifier = Modifier.height(50.dp))
 
-            // PROJECTS
+            // PROJECT BUTTON
 
             Button(onClick = {
                 // Navegar a la pantalla de carga
@@ -285,6 +309,17 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                         .wrapContentSize(Alignment.Center))
             }
             //}
+
+        // BARRA DE NIVEL
+
+       Spacer(modifier = Modifier.height(50.dp))
+
+
+       profile.level?.let {
+           ProgressBar(level = it.toInt(), maxLevel = 21) // Usamos la barra de progreso
+       }
+
+
         }
     }
 }
@@ -322,7 +357,7 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
         Box(modifier = Modifier.fillMaxSize().background(Color.Yellow)) {
             // Usar el componente VideoPlayer??
 
-            // Mostrar la pantalla de carga si los proyectos no están cargados
+        // PROJECTS
             if (!projectsLoaded) {
                 LoadingScreen() // Pantalla de carga
             } else {
@@ -332,13 +367,10 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Mostrar la lista de proyectos si están disponibles
+
                     if (projects != null) {
-                        LazyColumn {
-                            items(projects) { project ->
-                                ProjectItem(project = project)
-                            }
-                        }
+                        ScrollableCircularProjectCarousel(projects = projects, navController)
+
                     } else {
                         // Mostrar un mensaje de error si no hay proyectos
                         Text(text = "Proyectos no encontrados", color = Color.Black)
@@ -346,153 +378,285 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
                 }
             }
 
-            // PROJECTS
 
-            Button(onClick = {
-                // Navegar atras
-                navController.navigate("profile")
-            },
+        //BOTON ATRAS
+            ButtonBack(
+                navController = navController,
                 modifier = Modifier
-                    .size(70.dp) // Aumenta el tamaño del botón
-                    .align(Alignment.TopStart)
-                    .offset(30.dp, 50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Black
-                )
-            ) {
-                Text(
-                    text= "<", //Tengo que poner un icono mas mono
-                    color = Color.Yellow,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 30.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center))
-            }
+                    .align(Alignment.TopStart) // Alineado en la esquina superior izquierda
+                    .offset(16.dp, 50.dp) // Más pegado a la pared izquierda
+            )
+
+
         }
     }
+}
 
+@Composable
+fun SelectedProjectScreen(
+    navController: NavController,
+    projectId: Int // ID del proyecto seleccionado
+) {
+    // Recuperar el proyecto desde SessionManager usando el ID
+    val project = SessionManager.userProfile?.projects?.find { it.project.id == projectId }
+
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Yellow)
+    ) {
+        if (project != null) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(220.dp)
+                        .background(Color.Black, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = project.project.name,
+                        color = Color.White,
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // Mostrar detalles adicionales del proyecto
+                Text(
+                    text = "Final Mark: ${project.finalMark ?: "No available"}",
+                    fontSize = 20.sp,
+
+                )
+                Text(
+                    text = "Status: ${project.status}",
+                    fontSize = 20.sp,
+                )
+                Text(
+                    text = "Updated At: ${project.updatedAt}",
+                    fontSize = 20.sp,
+                )
+
+                Spacer(modifier = Modifier.height(50.dp)) // Espacio extra abajo
+            }
+        } else {
+            Text(
+                text = "Proyecto no encontrado",
+                color = Color.Red,
+                fontSize = 20.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.align(Alignment.Center) // Centrar mensaje de error
+            )
+        }
+
+        //BOTON ATRAS
+
+        ButtonBack(
+            navController = navController,
+            modifier = Modifier
+                .align(Alignment.TopStart) // Alineado en la esquina superior izquierda
+                .offset(16.dp, 50.dp) // Más pegado a la pared izquierda
+        )
+    }
 }
 
 
 ///////////////// COMPONENTES REUTILIZABLES ///////////////////
 
+@Composable
+fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: NavController) {
 
-//-------------------------//REPRODUCTOR DE VIDEO DE FONDO//---------------------------//
+    val listState = rememberLazyListState()    // Mantener el estado de la lista
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val itemHeight = 80.dp
+    val circleHeight = 60.dp
+    val padding = 12.dp
 
-/*@Composable
-fun VideoPlayer(
-    videoFileName: String,
-    modifier: Modifier = Modifier,
-    onVideoFinished: () -> Unit = {} // Callback cuando el video termina
-) {
-    val context = LocalContext.current
+    // Para centrar
+    val spacerHeight = (screenHeight - itemHeight) / 2
 
-    // Cargar el video desde shared
-    val inputStream = context.assets.open("videos/$videoFileName")
+    // Calcular el índice para el seleccionado
+    val centerIndex by remember {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (visibleItemsInfo.isEmpty()) return@derivedStateOf 0
 
-    Log.d("VIDEO", "INPUT $videoFileName")
+            val center = layoutInfo.viewportStartOffset + (layoutInfo.viewportEndOffset - layoutInfo.viewportStartOffset) / 2
 
-    // Obtener su URI (
-    val videoUri = remember {
+            var closestIndex = 0
+            var minDistance = Int.MAX_VALUE
 
-        if (inputStream != null) {
-            // Video en un archivo temp (Por que está en commonMain/assets hace falta temp)
-            val tempFile = File.createTempFile("video", ".mp4", context.cacheDir)
-
-            tempFile.outputStream().use { output ->
-                inputStream.copyTo(output)
-            }
-            Log.d("VIDEO", "Uri OK")
-            Uri.fromFile(tempFile)
-        } else {
-            Log.d("VIDEO", "URI Empty")
-            Uri.EMPTY //Por si no encuentra el recurso
-        }
-    }
-
-    // ExoPlayer para reproducir el video
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            val mediaItem = MediaItem.fromUri(videoUri)
-            setMediaItem(mediaItem)
-            repeatMode = ExoPlayer.REPEAT_MODE_OFF // Desactivar el bucle
-            prepare()
-            play()
-        }
-    }
-
-    // Detener el video en el último frame
-    LaunchedEffect(exoPlayer) {
-        exoPlayer.addListener(object : Player.Listener {
-            override fun onPlaybackStateChanged(playbackState: Int) {
-                if (playbackState == Player.STATE_ENDED) {
-                    // Cuando el video termina, llamamos al callback
-                    onVideoFinished()
+            for (itemInfo in visibleItemsInfo) {
+                val itemCenter = itemInfo.offset + itemInfo.size / 2
+                val distance = kotlin.math.abs(itemCenter - center)
+                if (distance < minDistance) {
+                    minDistance = distance
+                    closestIndex = itemInfo.index
                 }
             }
-        })
-    }
 
-    // Liberar el ExoPlayer cuando el componente se destruya
-    DisposableEffect(Unit) {
-        onDispose {
-            exoPlayer.release()
+            closestIndex
         }
     }
 
-    // Reproducir el video de fondo
-    AndroidView(
-        factory = { context ->
-            PlayerView(context).apply {
-                player = exoPlayer
-                useController = false // Ocultar controles de reproducción
-                layoutParams = ViewGroup.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                )
-            }
-        },
-        modifier = modifier.fillMaxSize()
-    )
-}*/
-
-//-------------------------//TARJETA DE PROYECTO//---------------------------//
-
-@Composable
-fun ProjectItem(project: Project) {
-
-    Card(
+    Box(
         modifier = Modifier
-            .fillMaxWidth()
-            .padding(20.dp, 10.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.Black)
-
+            .fillMaxSize()
+            .background(Color.Yellow)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp, 30.dp)
+        // LazyColumn para los proyectos en carrusel
+        LazyColumn(
+            state = listState,
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            contentPadding = PaddingValues(
+                top = spacerHeight,
+                bottom = spacerHeight
+            )
         ) {
-            Text(text = project.project.name, fontWeight = FontWeight.Bold, color = Color.Yellow)
-            //Text(text = project.project.description)
+            itemsIndexed(projects) { index, project ->
+                val isSelected = index == centerIndex
 
+                if (isSelected) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = padding)
+                            .height(itemHeight)
+                            .background(Color.Black)
+                            .clickable {
+                                // Pasar el ID del proyecto como argumento de navegación
+                                navController.navigate("selected_project") {
+                                    launchSingleTop = true
+                                    // Pasamos el ID como un entero
+                                    navController.currentBackStackEntry?.savedStateHandle?.set("projectId", project.project.id)
+                                }
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = project.project.name,
+                            color = Color.Yellow,
+                            fontSize = 24.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .padding(vertical = 6.dp)
+                            .size(circleHeight)
+                            .background(Color.Black, shape = CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = project.project.name,
+                            color = Color.White,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Clip,
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    // Efecto para desplazarse al primer ítem (índice 0)
+    LaunchedEffect(projects) {
+        if (projects.isNotEmpty()) {
+            // Empezar con el primer proyecto seleccionado (índice 0)
+            listState.scrollToItem(0)
         }
     }
 }
+
+
 
 //-------------------------//BOTONES//---------------------------//
 
 @Composable
-fun ButtonBack(){
-    //Este es el de back, con la flechita que quiero que sea mas mona, (negro con flechita amarilla)
+fun ButtonBack(navController: NavController, modifier: Modifier = Modifier) {
+    Box(modifier = modifier) {
+        Button(
+            onClick = {
+                navController.navigateUp() // Navegar hacia atrás en la pila de navegación
+            },
+            modifier = Modifier
+                .size(70.dp) // Ajusta el tamaño del botón
+                .offset(16.dp, 50.dp), // Ajusta la posición: más pegado a la pared izquierda
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black // Color de fondo negro
+            )
+        ) {
+            Text(
+                text = "<", // Puedes cambiar esto por un ícono si lo prefieres
+                color = Color.Yellow, // Color de la flecha amarilla
+                textAlign = TextAlign.Center,
+                fontWeight = FontWeight.Bold,
+                fontSize = 30.sp, // Tamaño de la flecha
+                fontFamily = FontFamily.SansSerif,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .wrapContentSize(Alignment.Center) // Centrado del texto
+            )
+        }
+    }
 }
 
 @Composable
-fun ButtonNext(){
-    //Este es el de LOG IN y el de PROJECTS (amarillo y letrs negras )
+fun ProgressBar(level: Int, maxLevel: Int = 21, modifier: Modifier = Modifier) {
+    // Calculamos el progreso como el nivel dividido por el nivel máximo
+    val progress = level.toFloat() / maxLevel.toFloat()
 
+    Box(
+        modifier = modifier
+            .fillMaxWidth() // La barra ocupa todo el ancho disponible
+            .height(20.dp)
+            .padding(horizontal = 16.dp) // Márgenes laterales para la barra
+            .background(Color.DarkGray, RoundedCornerShape(10.dp)) // Fondo gris oscuro con esquinas redondeadas
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxHeight() // La barra amarilla ocupará toda la altura
+                .width((progress * 100).dp) // Calculamos el ancho de la barra amarilla basado en el progreso
+                .background(Color.Yellow, RoundedCornerShape(10.dp)) // Barra amarilla con esquinas redondeadas
+        ) {
+            // Mostramos el nivel en el centro de la barra de progreso
+            Text(
+                text = "$level", // Mostramos el nivel
+                color = Color.Black,
+                style = TextStyle(
+                    fontSize = 12.sp, // Tamaño de fuente ajustable
+                    fontWeight = FontWeight.Bold
+                ),
+                modifier = Modifier.align(Alignment.Center) // Centra el texto dentro de la barra
+            )
+        }
+    }
 }
+
+
+
+
+
+
+
+
+//ESTILOS DE TEXTO REUTILIZABLES
 
 
 
