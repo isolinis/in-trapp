@@ -8,6 +8,8 @@ class ProfileViewModel: ObservableObject {
     // Estado Proyectos (false inicialmente)
     @Published var projectsLoaded: Bool = false
 
+    @Published var projects: [Project] = []
+
     // Función para manejar el callback de OAuth
     func handleAuthCallback(code: String) {
             DispatchQueue.global().async {
@@ -25,27 +27,36 @@ class ProfileViewModel: ObservableObject {
             }
         }
 
-        // Función para cargar los proyectos
-        func loadProjects() {
-            DispatchQueue.global().async {
+    // Función para cargar los proyectos
+    func loadProjects() {
+
+        // si ya hay proyectos cargados (sincrónico)
+        if let cachedProjects = SessionManager.shared.userProfile?.projects,
+           !cachedProjects.isEmpty {
+            DispatchQueue.main.async {
+                self.projects = cachedProjects
+                self.projectsLoaded = true
+            }
+            return
+        }
+        // 2. Si no, llama a la API en background
+        DispatchQueue.main.async { //  Asegura ejecución en hilo principal
+            Task {
                 do {
-                    try Api42().getProjectsWrapper()
-                    DispatchQueue.main.async {
+                    try await Api42().getProjectsWrapper()
+
+                    if let userProfile = SessionManager.shared.userProfile {
+                        self.projects = userProfile.projects
                         self.projectsLoaded = true
                     }
                 } catch {
-                    print("Error loading projects: \(error)")
-                    DispatchQueue.main.async {
-                        self.projectsLoaded = false
-                    }
+                    print(" Error al cargar los proyectos : \(error.localizedDescription)")
+                    self.projectsLoaded = false
+                    self.projects = []
                 }
             }
         }
-}
+    }
 
-/*
-DispatchQueue.global().async: Ejecuta el código en un hilo en segundo plano.
-DispatchQueue.main.async: Vuelve al hilo principal para actualizar el estado (profileLoaded).
 
-do-catch (try-catch)
-*/
+    }

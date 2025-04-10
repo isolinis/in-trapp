@@ -10,6 +10,10 @@
 		058557BB273AAA24004C7B11 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557BA273AAA24004C7B11 /* Assets.xcassets */; };
 		058557D9273AAEEB004C7B11 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */; };
 		2152FB042600AC8F00CF470E /* IOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2152FB032600AC8F00CF470E /* IOSApp.swift */; };
+		640BA5B52DA08E240044D46C /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 640BA5B42DA08E240044D46C /* ProgressBar.swift */; };
+		640BA5B92DA08E420044D46C /* SelectedProjectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 640BA5B82DA08E420044D46C /* SelectedProjectView.swift */; };
+		640BA5BB2DA08E5D0044D46C /* ProgressBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 640BA5BA2DA08E5D0044D46C /* ProgressBar.swift */; };
+		640BA5BF2DA093BE0044D46C /* CarouselView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 640BA5BE2DA093BE0044D46C /* CarouselView.swift */; };
 		64B4AF112D873100007177CD /* ProjectsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B4AF0F2D873100007177CD /* ProjectsView.swift */; };
 		64B4AF122D873100007177CD /* LoadingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B4AF0C2D873100007177CD /* LoadingView.swift */; };
 		64B4AF132D873100007177CD /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 64B4AF0E2D873100007177CD /* ProfileView.swift */; };
@@ -36,6 +40,10 @@
 		058557BA273AAA24004C7B11 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		058557D8273AAEEB004C7B11 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		2152FB032600AC8F00CF470E /* IOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOSApp.swift; sourceTree = "<group>"; };
+		640BA5B42DA08E240044D46C /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
+		640BA5B82DA08E420044D46C /* SelectedProjectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedProjectView.swift; sourceTree = "<group>"; };
+		640BA5BA2DA08E5D0044D46C /* ProgressBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressBar.swift; sourceTree = "<group>"; };
+		640BA5BE2DA093BE0044D46C /* CarouselView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CarouselView.swift; sourceTree = "<group>"; };
 		64B4AF0C2D873100007177CD /* LoadingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoadingView.swift; sourceTree = "<group>"; };
 		64B4AF0D2D873100007177CD /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		64B4AF0E2D873100007177CD /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
@@ -86,13 +94,17 @@
 		7555FF7D242A565900829871 /* iosApp */ = {
 			isa = PBXGroup;
 			children = (
+				640BA5BE2DA093BE0044D46C /* CarouselView.swift */,
 				058557BA273AAA24004C7B11 /* Assets.xcassets */,
 				7555FF82242A565900829871 /* AppView.swift */,
 				64B4AF0C2D873100007177CD /* LoadingView.swift */,
 				64B4AF0D2D873100007177CD /* LoginView.swift */,
 				64B4AF0E2D873100007177CD /* ProfileView.swift */,
 				64B4AF162D8739EF007177CD /* ProfileViewModel.swift */,
+				640BA5BA2DA08E5D0044D46C /* ProgressBar.swift */,
+				640BA5B42DA08E240044D46C /* ProgressBar.swift */,
 				64B4AF0F2D873100007177CD /* ProjectsView.swift */,
+				640BA5B82DA08E420044D46C /* SelectedProjectView.swift */,
 				64B4AF102D873100007177CD /* VideoPlayerView.swift */,
 				7555FF8C242A565B00829871 /* Info.plist */,
 				2152FB032600AC8F00CF470E /* IOSApp.swift */,
@@ -204,10 +216,14 @@
 				7555FF83242A565900829871 /* AppView.swift in Sources */,
 				64B4AF112D873100007177CD /* ProjectsView.swift in Sources */,
 				64B4AF122D873100007177CD /* LoadingView.swift in Sources */,
+				640BA5B52DA08E240044D46C /* ProgressBar.swift in Sources */,
 				64B4AF132D873100007177CD /* ProfileView.swift in Sources */,
 				64B4AF142D873100007177CD /* VideoPlayerView.swift in Sources */,
 				64B4AF172D8739EF007177CD /* ProfileViewModel.swift in Sources */,
 				64B4AF152D873100007177CD /* LoginView.swift in Sources */,
+				640BA5BB2DA08E5D0044D46C /* ProgressBar.swift in Sources */,
+				640BA5BF2DA093BE0044D46C /* CarouselView.swift in Sources */,
+				640BA5B92DA08E420044D46C /* SelectedProjectView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

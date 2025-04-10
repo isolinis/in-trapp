@@ -25,6 +25,7 @@ struct AppView: View {
         // Es más moderno y flexible q NavigationView y Necesario para poder gestionar loading (eliminarla cuando carga profile)
         //Cada vista recibe navigationPath como @Binding, lo que le permite navegar a otra pantalla o retroceder
         NavigationStack(path: $navigationPath) {
+
                     VStack { LoginView(navigationPath: $navigationPath) } // Pantalla default LoginView
                     .navigationDestination(for: String.self) { route in
                         switch route {

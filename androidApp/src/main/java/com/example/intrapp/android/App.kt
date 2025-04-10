@@ -5,7 +5,6 @@ import android.net.Uri
 import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,15 +17,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,7 +43,6 @@ import com.example.intrapp.SessionManager
 import com.example.shared.VideoPlayer
 
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 
@@ -59,19 +53,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.intrapp.Project
-import kotlin.math.abs
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.IntOffset
-import kotlinx.coroutines.delay
-import kotlin.math.cos
-import kotlin.math.sin
 
 //-------------------------//APP NAVEGADOR//---------------------------//
 
@@ -310,14 +300,14 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
             }
             //}
 
-        // BARRA DE NIVEL
+        // BARRA DE NIVEL (es feisima, no la quiero d momento)
 
        Spacer(modifier = Modifier.height(50.dp))
 
 
-       profile.level?.let {
-           ProgressBar(level = it.toInt(), maxLevel = 21) // Usamos la barra de progreso
-       }
+       //profile.level?.let {
+       //    ProgressBar(level = it, maxLevel = 21) // Usamos la barra de progreso
+       //}
 
 
         }
@@ -383,8 +373,8 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
             ButtonBack(
                 navController = navController,
                 modifier = Modifier
-                    .align(Alignment.TopStart) // Alineado en la esquina superior izquierda
-                    .offset(16.dp, 50.dp) // Más pegado a la pared izquierda
+                    .align(Alignment.TopStart)
+                    .offset(16.dp, 50.dp)
             )
 
 
@@ -397,7 +387,6 @@ fun SelectedProjectScreen(
     navController: NavController,
     projectId: Int // ID del proyecto seleccionado
 ) {
-    // Recuperar el proyecto desde SessionManager usando el ID
     val project = SessionManager.userProfile?.projects?.find { it.project.id == projectId }
 
 
@@ -416,8 +405,9 @@ fun SelectedProjectScreen(
             ) {
                 Box(
                     modifier = Modifier
-                        .size(220.dp)
-                        .background(Color.Black, CircleShape),
+                        .size(250.dp)
+                        .background(Color.Black, CircleShape)
+                        .padding(bottom = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -425,28 +415,45 @@ fun SelectedProjectScreen(
                         color = Color.White,
                         fontSize = 28.sp,
                         fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(24.dp)
                     )
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // Mostrar detalles adicionales del proyecto
-                Text(
-                    text = "Final Mark: ${project.finalMark ?: "No available"}",
-                    fontSize = 20.sp,
+                // INFO
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp) // Más espacio
+                ) {
+                    Text(
+                        text = "Final Mark: ${project.finalMark ?: "No available"}",
+                        fontSize = 22.sp, // Texto más grande
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                )
-                Text(
-                    text = "Status: ${project.status}",
-                    fontSize = 20.sp,
-                )
-                Text(
-                    text = "Updated At: ${project.updatedAt}",
-                    fontSize = 20.sp,
-                )
+                    Text(
+                        text = "Status: ${project.status}",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Spacer(modifier = Modifier.height(50.dp)) // Espacio extra abajo
+                    Text(
+                        text = "Updated At: ${project.updatedAt}",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Medium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+
+
+                Spacer(modifier = Modifier.height(50.dp))
             }
         } else {
             Text(
@@ -454,7 +461,7 @@ fun SelectedProjectScreen(
                 color = Color.Red,
                 fontSize = 20.sp,
                 textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center) // Centrar mensaje de error
+                modifier = Modifier.align(Alignment.Center)
             )
         }
 
@@ -463,8 +470,8 @@ fun SelectedProjectScreen(
         ButtonBack(
             navController = navController,
             modifier = Modifier
-                .align(Alignment.TopStart) // Alineado en la esquina superior izquierda
-                .offset(16.dp, 50.dp) // Más pegado a la pared izquierda
+                .align(Alignment.TopStart)
+                .offset(16.dp, 50.dp)
         )
     }
 }
@@ -591,56 +598,50 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
 @Composable
 fun ButtonBack(navController: NavController, modifier: Modifier = Modifier) {
     Box(modifier = modifier) {
-        Button(
-            onClick = {
-                navController.navigateUp() // Navegar hacia atrás en la pila de navegación
-            },
+        IconButton(
+            onClick = { navController.navigateUp() },
             modifier = Modifier
-                .size(70.dp) // Ajusta el tamaño del botón
-                .offset(16.dp, 50.dp), // Ajusta la posición: más pegado a la pared izquierda
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color.Black // Color de fondo negro
-            )
+                .size(60.dp)
+                .background(
+                    color = Color.Black,
+                    shape = CircleShape
+                )
         ) {
-            Text(
-                text = "<", // Puedes cambiar esto por un ícono si lo prefieres
-                color = Color.Yellow, // Color de la flecha amarilla
-                textAlign = TextAlign.Center,
-                fontWeight = FontWeight.Bold,
-                fontSize = 30.sp, // Tamaño de la flecha
-                fontFamily = FontFamily.SansSerif,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .wrapContentSize(Alignment.Center) // Centrado del texto
+            Icon(
+                imageVector = Icons.Default.ArrowBack,
+                contentDescription = "Back",
+                tint = Color(0xFFFFFC00), // Amarillo #FFFCC00
+                modifier = Modifier.size(28.dp)
             )
         }
     }
 }
 
 @Composable
-fun ProgressBar(level: Int, maxLevel: Int = 21, modifier: Modifier = Modifier) {
+fun ProgressBar(level: Double, maxLevel: Int = 21, modifier: Modifier = Modifier) {
     // Calculamos el progreso como el nivel dividido por el nivel máximo
     val progress = level.toFloat() / maxLevel.toFloat()
 
+    //BARRA GRIS
     Box(
         modifier = modifier
-            .fillMaxWidth() // La barra ocupa todo el ancho disponible
+            .fillMaxWidth()
             .height(20.dp)
             .padding(horizontal = 16.dp) // Márgenes laterales para la barra
             .background(Color.DarkGray, RoundedCornerShape(10.dp)) // Fondo gris oscuro con esquinas redondeadas
     ) {
+        //BARRA AMARILLA
         Box(
             modifier = Modifier
-                .fillMaxHeight() // La barra amarilla ocupará toda la altura
-                .width((progress * 100).dp) // Calculamos el ancho de la barra amarilla basado en el progreso
-                .background(Color.Yellow, RoundedCornerShape(10.dp)) // Barra amarilla con esquinas redondeadas
+                .fillMaxHeight()
+                .fillMaxWidth(progress)  // barra amarilla basado en el progreso
+                .background(Color.Yellow, RoundedCornerShape(10.dp))
         ) {
-            // Mostramos el nivel en el centro de la barra de progreso
             Text(
-                text = "$level", // Mostramos el nivel
+                text = "$level",
                 color = Color.Black,
                 style = TextStyle(
-                    fontSize = 12.sp, // Tamaño de fuente ajustable
+                    fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 ),
                 modifier = Modifier.align(Alignment.Center) // Centra el texto dentro de la barra

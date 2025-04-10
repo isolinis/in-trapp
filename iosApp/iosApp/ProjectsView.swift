@@ -4,95 +4,53 @@ import shared
 struct ProjectsView: View {
     @EnvironmentObject private var viewModel: ProfileViewModel
     @Binding var navigationPath: NavigationPath
-    @State private var projects: [Project] = []
 
     private let customYellow = Color(red: 1.0, green: 0.988, blue: 0.0)
     private let customBlack = Color.black
 
     var body: some View {
         ZStack {
-            customYellow.edgesIgnoringSafeArea(.all)
+            // Fondo amarillo
+            customYellow.ignoresSafeArea()
 
-            if viewModel.projectsLoaded {
-                if !projects.isEmpty {
-                    ScrollView {
-                        LazyVStack(spacing: 16) {
-                            ForEach(projects, id: \.id) { project in
-                                ProjectRow(project: project)
-                            }
-                        }
-                        .padding(.top, 80)
-                        .padding(.horizontal, 16)
-                    }
-                } else {
+            // Contenido principal
+            if !viewModel.projectsLoaded {
+                LoadingView(navigationPath: $navigationPath)
+            } else {
+                if viewModel.projects.isEmpty {
                     Text("Proyectos no encontrados")
                         .foregroundColor(customBlack)
-                        .padding(.top, 80)
+                } else {
+                    VerticalCarouselView(
+                        projects: viewModel.projects,
+                        navigationPath: $navigationPath
+                    )
+                    .navigationBarHidden(true)
                 }
-            } else {
-                LoadingView(navigationPath: $navigationPath) // Pasa el parámetro requerido
             }
 
             // Botón de volver
             Button(action: {
                 navigationPath.removeLast()
             }) {
-                Text("<")
-                    .font(.system(size: 30, weight: .bold))
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 24, weight: .bold))
                     .foregroundColor(customYellow)
-                    .frame(width: 70, height: 70)
+                    .frame(width: 50, height: 50)
                     .background(customBlack)
                     .clipShape(Circle())
             }
-            .position(x: 70, y: 70)
+            .padding(.leading, 16)
+            .padding(.top, 16)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
         .onAppear {
             if !viewModel.projectsLoaded {
-                loadProjects()
+                viewModel.loadProjects()
             }
         }
-    }
-
-    private func loadProjects() {
-        Task {
-            do {
-                try await Api42().getProjectsWrapper()
-                // Accede a los proyectos a través de userProfile
-                if let userProfile = SessionManager.shared.userProfile {
-                    projects = userProfile.projects.compactMap { $0 as? Project }
-                }
-                viewModel.projectsLoaded = true
-            } catch {
-                print("Error loading projects: \(error)")
-                viewModel.projectsLoaded = true
-            }
+        .navigationDestination(for: Project.self) { project in
+        SelectedProjectView(project: project, navigationPath: $navigationPath)
         }
-    }
-}
-
-struct ProjectRow: View {
-    let project: Project
-    private let customBlack = Color.black
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(project.project.name) // Accede al nombre a través de project.project
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(customBlack)
-
-            Text("Estado: \(project.status)")
-                .font(.system(size: 14))
-                .foregroundColor(customBlack)
-
-            if let finalMark = project.finalMark {
-                Text("Nota final: \(finalMark)")
-                    .font(.system(size: 14))
-                    .foregroundColor(customBlack)
-            }
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.white.opacity(0.3))
-        .cornerRadius(8)
     }
 }
