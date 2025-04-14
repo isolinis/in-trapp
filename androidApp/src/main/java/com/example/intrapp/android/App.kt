@@ -3,7 +3,12 @@ package com.example.intrapp.android
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -55,13 +60,25 @@ import coil.compose.AsyncImage
 import com.example.intrapp.Project
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.intrapp.UserProfile
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.math.log
 
 //-------------------------//APP NAVEGADOR//---------------------------//
 
@@ -111,6 +128,9 @@ fun App(viewModel: ProfileViewModel) {
             val projectId = navController.previousBackStackEntry?.savedStateHandle?.get<Int>("projectId") ?: -1
             SelectedProjectScreen(navController, projectId)
         }
+        composable("skills") {
+            SkillsScreen(navController = navController, viewModel = viewModel<ProfileViewModel>())
+        }
     }
 }
 
@@ -128,11 +148,11 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 
         //VIDEO FONDO // Usa el @componente VideoPlayer
 
-        Box(modifier = Modifier.fillMaxSize()) {
+        Box(modifier = Modifier.fillMaxSize().padding(0.dp)) {
 
             VideoPlayer(
-                videoFileName = "loginvideo.mp4", // Nombre del archivo de video
-                modifier = Modifier, // Usa Modifier por defecto
+                videoFileName = "loginvideo.mp4",
+                modifier = Modifier.fillMaxSize(),
                 onVideoFinished = { videoFinished = true } // Callback cuando el video termina
             )
             if (videoFinished) {
@@ -156,7 +176,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
                         modifier = Modifier
                             .size(100.dp)
                             .align(Alignment.BottomEnd)
-                            .offset(x = (-16).dp, y = (-150).dp), // Ajustar la posición
+                            .offset(x = (-16).dp, y = (-100).dp), // Ajustar la posición
                         colors = ButtonDefaults.buttonColors(
                             containerColor = Color.Yellow
                         )
@@ -179,141 +199,190 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
     }
 }
 
+
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
-
-    // Observar el estado de carga del perfil (y de los proyectos?)
     val profileLoaded by viewModel.profileLoaded.collectAsState()
-    //val projectsLoaded by viewModel.projectsLoaded.collectAsState()
-
-    // Observar reproduccion del video
-    //var videoFinished by remember { mutableStateOf(false) }
-
-    // Obtener el perfil (y los proyectos? )desde SessionManager
     val profile = SessionManager.userProfile
-    //val projects = SessionManager.projects
 
-    //val context = LocalContext.current
-
-
-    //STYLES // Definir un TextStyle personalizado
-
+    // Aumenté el lineHeight y añadí más espacio entre elementos
     val profileTextStyle = TextStyle(
         color = Color.White,
-        fontSize = 18.sp,
-        //fontWeight = FontWeight.Bold,
+        fontSize = 20.sp,
         fontFamily = FontFamily.Default,
-        letterSpacing = 0.5.sp
+        letterSpacing = 0.5.sp,
+        lineHeight = 28.sp // Aumentado de 24 a 28.sp
     )
 
     MaterialTheme {
-
-        //VIDEO FONDO // Usa el @componente VideoPlayer
-
-        Box(modifier = Modifier.fillMaxSize().background(Color.Black)) {
-            // Usar el componente VideoPlayer
-            //VideoPlayer(
-            //    videoFileName = "profilevideo.mp4", // Nombre del archivo de video
-            //    onVideoFinished = { videoFinished = true } // Callback cuando el video termina
-            //)
-
-            //if (videoFinished) {
-
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .systemBarsPadding()
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Sección superior
                 Column(
-                    modifier = Modifier.fillMaxSize(),//.background(Color.Black),
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
-
                 ) {
+                    // Avatar (250.dp)
+                    Box(
+                        modifier = Modifier
+                            .size(250.dp)
+                            .background(Color.Yellow, CircleShape)
+                            .clip(CircleShape)
+                            .background(Color.Black)
+                    ) {
+                        AsyncImage(
+                            model = profile!!.image?.link,
+                            contentDescription = "Avatar",
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
 
-                // AVATAR
-                Box(
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // Información con más espacio entre líneas
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp) // Aumentado de 8 a 12.dp
+                    ) {
+                        Text(
+                            text = profile!!.login,
+                            color = Color.White,
+                            fontSize = 25.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp)) // Aumentado de 8 a 12.dp
+
+                        Text(
+                            text = "${profile.first_name} ${profile.last_name}",
+                            style = profileTextStyle
+                        )
+                        Text(
+                            text = "email: ${profile.email}",
+                            style = profileTextStyle
+                        )
+                        Text(
+                            text = "Level: ${profile.level}",
+                            style = profileTextStyle
+                        )
+                        Text(
+                            text = "Wallet: ${profile.wallet}",
+                            style = profileTextStyle
+                        )
+
+                    }
+                }
+
+                // Botones
+                Column(
                     modifier = Modifier
-                        .size(220.dp)
-                        .background(Color.Yellow, CircleShape)
-                        .clip(CircleShape)
-                        .background(Color.Black)
+                        .fillMaxWidth(0.9f)
+                        .padding(bottom = 14.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                // Imagen
-                AsyncImage(
-                    model = profile!!.image?.link,
-                    contentDescription = "Avatar",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop, // Ajusta la imagen al círculo
-                    //placeholder = painterResource(R.drawable.placeholder), // Imagen de placeholder mientras carga
-                    //error = painterResource(R.drawable.error_image) // Imagen de error si falla la carga
-                )
+                    // Botón PROJECTS
+                    Button(
+                        onClick = {
+                            viewModel.loadProjects()
+                            navController.navigate("projects")
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp, bottom = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black
+                        ),
+                        border = BorderStroke(2.dp, Color.Yellow),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "PROJECTS",
+                            color = Color.Yellow,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+                    // Botón SKILLS
+                    Button(
+                        onClick = {
+                            // Crea un scope de corrutina
+                            val coroutineScope = CoroutineScope(Dispatchers.Main)
+                            coroutineScope.launch {
+                                try {
+                                    if (SessionManager.userProfile?.projects.isNullOrEmpty()) {
+                                        viewModel.loadProjects()
+                                        Log.d("SKILLS ","PROJECT NBR: ${SessionManager.userProfile?.projects?.size}")
+                                    }
+                                    // 3. Cargar skills
+                                    viewModel.loadUserSkills()
+
+                                    // 4. Navegar
+                                    navController.navigate("skills")
+                                } catch (e: Exception) {
+                                    Log.e("SkillsButton", "Error al cargar skills", e)
+                                    // Puedes mostrar un mensaje de error al usuario aquí
+                                }
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 6.dp, bottom = 6.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color.Black
+                        ),
+                        border = BorderStroke(2.dp, Color.Yellow),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text(
+                            text = "SKILLS",
+                            color = Color.Yellow,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 20.sp,
+                            modifier = Modifier.padding(8.dp)
+                        )
+                    }
+
+                    // Botón LOGOUT
+                    Box(
+                        modifier = Modifier
+                            .clickable {
+                                SessionManager.clearSession()
+                                navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                            }
+                            .size(110.dp) // Mismo tamaño que en iOS (100x100)
+                            .background(Color.Yellow, CircleShape) // Fondo amarillo circular
+                            .border(2.dp, Color.Black, CircleShape), // Borde negro circular
+                        contentAlignment = Alignment.Center // Centra el texto
+                    ) {
+                        Text(
+                            text = "LOG OUT",
+                            color = Color.Black,
+                            fontSize = 16.sp, // Tamaño de texto igual que en iOS
+                            fontWeight = FontWeight.Black, // Texto en negrita
+                            textAlign = TextAlign.Center // Texto centrado
+                        )
+                    }
+                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            //INFO
-            Text(
-                text = profile!!.login,
-                color = Color.White,
-                fontSize = 25.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = FontFamily.Default,
-                letterSpacing = 0.5.sp
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-
-            Text(
-                text = " ${profile.first_name} ${profile.last_name} ",
-                style = profileTextStyle
-            )
-            Text(text = "email: ${profile.email}", style = profileTextStyle)
-            Text(
-                text = "Location: ${profile.location ?: "No available"}",
-                style = profileTextStyle
-            )
-            Text(text = "Wallet: ${profile.wallet}", style = profileTextStyle)
-
-            Spacer(modifier = Modifier.height(50.dp))
-
-            // PROJECT BUTTON
-
-            Button(onClick = {
-                // Navegar a la pantalla de carga
-                //navController.navigate("loading")
-                viewModel.loadProjects()
-                navController.navigate("projects")
-            },
-                modifier = Modifier
-                    .size(100.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color.Yellow
-                )
-                ) {
-                Text(
-                    text= "PROJECTS",
-                    color = Color.Black,
-                    textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 10.sp,
-                    fontFamily = FontFamily.SansSerif,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .wrapContentSize(Alignment.Center))
-            }
-            //}
-
-        // BARRA DE NIVEL (es feisima, no la quiero d momento)
-
-       Spacer(modifier = Modifier.height(50.dp))
-
-
-       //profile.level?.let {
-       //    ProgressBar(level = it, maxLevel = 21) // Usamos la barra de progreso
-       //}
-
-
         }
     }
-}
-    //Necesito un boton de LOG OUT
 }
 
 @Composable
@@ -344,7 +413,7 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
 
         //VIDEO FONDO // Usa el @componente VideoPlayer
 
-        Box(modifier = Modifier.fillMaxSize().background(Color.Yellow)) {
+        Box(modifier = Modifier.fillMaxSize().background( Color(0xFFFFFC00))) {
             // Usar el componente VideoPlayer??
 
         // PROJECTS
@@ -444,7 +513,7 @@ fun SelectedProjectScreen(
                     )
 
                     Text(
-                        text = "Updated At: ${project.updatedAt}",
+                        text = "Updated At:\n ${project.updatedAt}",
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Medium,
                         textAlign = TextAlign.Center,
@@ -475,9 +544,6 @@ fun SelectedProjectScreen(
         )
     }
 }
-
-
-///////////////// COMPONENTES REUTILIZABLES ///////////////////
 
 @Composable
 fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: NavController) {
@@ -591,7 +657,86 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
     }
 }
 
+@Composable
+fun SkillsScreen(
+    navController: NavController,
+    viewModel: ProfileViewModel
+) {
+    val userSkills = SessionManager.userProfile?.skills ?: emptyList()
 
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Yellow)
+            .padding(16.dp)
+    ) {
+        // Versión correcta de LazyColumn con items
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            items(userSkills) { skill ->  // skill es de tipo UserProfile.UserSkill
+                SkillItem(
+                    name = skill.name,
+                    percentage = skill.level.toInt()
+                )
+            }
+        }
+    }
+}
+
+
+@Composable
+fun SkillItem(name: String, percentage: Int) {
+    var animationPlayed by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        animationPlayed = true
+    }
+
+    val animatedProgress by animateFloatAsState(
+        targetValue = if (animationPlayed) percentage / 100f else 0f,
+        animationSpec = tween(
+            durationMillis = 1000,
+            easing = FastOutSlowInEasing
+        )
+    )
+
+    Column {
+        Text(
+            text = name,
+            color = Color.Black,
+            fontSize = 18.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 4.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(24.dp)
+                .clip(RoundedCornerShape(12.dp))
+                .background(Color.DarkGray)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedProgress)
+                    .fillMaxHeight()
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(Color.Black)
+            )
+
+            Text(
+                text = "$percentage%",
+                color = Color.White,
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .padding(end = 8.dp)
+            )
+        }
+    }
+}
 
 //-------------------------//BOTONES//---------------------------//
 
@@ -608,10 +753,10 @@ fun ButtonBack(navController: NavController, modifier: Modifier = Modifier) {
                 )
         ) {
             Icon(
-                imageVector = Icons.Default.ArrowBack,
+                imageVector = Icons.Default.KeyboardArrowLeft,
                 contentDescription = "Back",
                 tint = Color(0xFFFFFC00), // Amarillo #FFFCC00
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(56.dp)
             )
         }
     }

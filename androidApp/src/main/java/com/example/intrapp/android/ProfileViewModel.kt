@@ -22,6 +22,13 @@ class ProfileViewModel : ViewModel() {
     private val _projectsLoaded = MutableStateFlow(false)
     val projectsLoaded: StateFlow<Boolean> = _projectsLoaded
 
+    // Estado para skills
+    private val _skillsLoaded = MutableStateFlow(false)
+    val skillsLoaded: StateFlow<Boolean> = _skillsLoaded
+
+    // Estado para errores
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
 
 
     // Función para manejar el callback de OAuth
@@ -57,6 +64,26 @@ class ProfileViewModel : ViewModel() {
             }
         }
     }
+
+    fun loadUserSkills() {
+        viewModelScope.launch {
+            try {
+                _skillsLoaded.value = false
+                val skills = Api42().getUserSkills()
+                SessionManager.userProfile = SessionManager.userProfile?.copy(
+                    skills = skills
+                )
+                _skillsLoaded.value = true
+                Log.d("ViewModel", "Skills calculadas: ${skills.size}")
+            } catch (e: Exception) {
+                Log.e("ViewModel", "Error calculando skills", e)
+                _skillsLoaded.value = false
+                _errorMessage.value = "Error calculando habilidades: ${e.message}"
+            }
+        }
+    }
+
+
 }
 
 

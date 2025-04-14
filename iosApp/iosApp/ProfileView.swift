@@ -62,13 +62,15 @@ struct ProfileView: View {
                                 .font(.system(size: 18))
                                 .foregroundColor(.white)
 
-                            Text("Location: \(profile.location ?? "No available")")
+                            Text("Level: \(profile.level)")
                                 .font(.system(size: 18))
                                 .foregroundColor(.white)
 
                             Text("Wallet: \(profile.wallet)")
                                 .font(.system(size: 18))
                                 .foregroundColor(.white)
+
+
                         }
 
                         Spacer().frame(height: 50)
@@ -79,7 +81,46 @@ struct ProfileView: View {
                             navigationPath.append("projects")
                         }) {
                             Text("PROJECTS")
-                                .font(.system(size: 10, weight: .bold))
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(customYellow)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(customBlack)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(customYellow, lineWidth: 2)
+                                )
+                        }
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 40)
+
+                        // BOTÓN SKILLS
+                        Button(action: {
+                            viewModel.loadProjects()
+                            navigationPath.append("projects")
+                        }) {
+                            Text("PROJECTS")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(customYellow)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(customBlack)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .stroke(customYellow, lineWidth: 2)
+                                )
+                        }
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 40)
+
+                        // BOTÓN DE LOGOUT
+                        Button(action: {
+                            SessionManager.shared.clearSession()
+                            navigationPath.removeLast(navigationPath.count)
+                        }) {
+                            Text("LOG OUT")
+                                .font(.system(size: 16, weight: .bold, design: .default))
+                                .multilineTextAlignment(.center)
                                 .foregroundColor(customBlack)
                                 .frame(width: 100, height: 100)
                                 .background(customYellow)
@@ -89,29 +130,10 @@ struct ProfileView: View {
                                         .stroke(customBlack, lineWidth: 2)
                                 )
                         }
-                        .padding(.bottom, 40)
+                        .padding(.bottom, 20)
                     }
                     .frame(maxWidth: .infinity)
                 }
-
-                // BOTÓN DE LOGOUT (texto centrado abajo)
-                Button(action: {
-                    SessionManager.shared.clearSession()
-                    navigationPath.removeLast(navigationPath.count)
-                }) {
-                    Text("LOG OUT")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(customYellow)
-                        .frame(maxWidth: .infinity)
-                        .padding()
-                        .background(customBlack)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(customYellow, lineWidth: 2)
-                        )
-                }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 20)
             }
         }
         .navigationBarBackButtonHidden(true)
