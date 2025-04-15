@@ -126,7 +126,6 @@ class Api42() {
         }.decodeFromString<UserProfile>(profileJson) // Ignora las claves que no están en el modelo
         SessionManager.userProfile = userProfile
 
-        println("[API42] getProfile() : USER PROFILE MODEL: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}\")")
 
     }
 
@@ -180,36 +179,6 @@ class Api42() {
                 SessionManager.userProfile?.projects = emptyList() //Limpiar projects en caso de error
                 throw e // Propagar el error
             }
-        }
-    }
-
-    suspend fun getUserSkills(): List<UserProfile.UserSkill> {
-        // 1. Verificar que tenemos los datos necesarios
-        val user = SessionManager.userProfile ?: throw Exception("Perfil de usuario no disponible")
-        val projects = user.projects.takeIf { it.isNotEmpty() }
-            ?: throw Exception("No hay proyectos cargados")
-
-        // 2. Extraer skills de cada proyecto
-        return projects
-            .filter { it.skills != null && it.finalMark != null } // Filtrar proyectos válidos
-            .flatMap { project ->
-                project.skills!!.map { skillName ->
-                    UserProfile.UserSkill(
-                        id = skillName.hashCode(), // ID único basado en el nombre
-                        name = skillName,
-                        level = calculateSkillLevel(project.finalMark!!)
-                    )
-                }
-            }
-            .distinctBy { it.name } // Eliminar duplicados
-    }
-
-    private fun calculateSkillLevel(finalMark: Int): Float {
-        return when {
-            finalMark >= 100 -> 100f
-            finalMark >= 75 -> 75f
-            finalMark >= 50 -> 50f
-            else -> 25f
         }
     }
 

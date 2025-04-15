@@ -3,7 +3,6 @@ package com.example.intrapp
 import kotlinx.serialization.Serializable
 import kotlin.jvm.Transient
 
-
 @Serializable
 data class UserProfile(
     val id: Int,
@@ -15,40 +14,36 @@ data class UserProfile(
     val location: String?,
     val wallet: Int,
 
-    var projects: List<Project> = emptyList(),
-    val cursus_users: List<CursusUser> = emptyList(),
-
-    var skills: List<UserSkill> = emptyList() //COMO EN LOADPROJECTS NO TIENE SKILLS EL JSON NO ME AVANZA. TRANSIENT
+    var projects: List<Project> = emptyList(), //PROJECTS
+    val cursus_users: List<CursusUser> = emptyList() //SKILLS
 ) {
     @Serializable
     data class Image(
         val link: String,
     )
 
+    // Lógica para obtener el level del cursus "42cursus" (el de id: 21)
+    val level: Double? = cursus_users
+        .firstOrNull { it.cursus.id == 21 }
+        ?.level
+
     @Serializable
     data class CursusUser(
-        val id: Int,
-        val level: Double?,
+        val skills: List<Skill>?,
         val cursus: Cursus,
+        val level: Double?
+    )
+
+    @Serializable
+    data class Skill(
+        val id: Int,
+        val name: String,
+        val level: Float  // Nivel viene como float (ej. 7.84)
     )
 
     @Serializable
     data class Cursus(
         val id: Int,
-        val name: String,
-        val kind: String
-    )
-
-    // Lógica para obtener el level del cursus "Cursus" (el de id: 21)
-    val level: Double? = cursus_users
-        .firstOrNull { it.cursus.id == 21 }
-        ?.level
-
-
-    @Serializable
-    data class UserSkill(
-        val id: Int,
-        val name: String,
-        val level: Float // Nivel de 0 a 100
+        val name: String
     )
 }

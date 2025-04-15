@@ -326,18 +326,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                             val coroutineScope = CoroutineScope(Dispatchers.Main)
                             coroutineScope.launch {
                                 try {
-                                    if (SessionManager.userProfile?.projects.isNullOrEmpty()) {
-                                        viewModel.loadProjects()
-                                        Log.d("SKILLS ","PROJECT NBR: ${SessionManager.userProfile?.projects?.size}")
-                                    }
-                                    // 3. Cargar skills
-                                    viewModel.loadUserSkills()
-
-                                    // 4. Navegar
                                     navController.navigate("skills")
                                 } catch (e: Exception) {
                                     Log.e("SkillsButton", "Error al cargar skills", e)
-                                    // Puedes mostrar un mensaje de error al usuario aquí
                                 }
                             }
                         },
@@ -662,7 +653,32 @@ fun SkillsScreen(
     navController: NavController,
     viewModel: ProfileViewModel
 ) {
-    val userSkills = SessionManager.userProfile?.skills ?: emptyList()
+    val userProfile = SessionManager.userProfile
+
+    // Verificamos si hay un perfil cargado y si tiene skills
+    if (userProfile == null) {
+        // Si no hay perfil, mostramos un mensaje
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Yellow),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "Perfil no disponible",
+                color = Color.Black,
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+        return
+    }
+
+    // Obtenemos todas las skills del cursus principal (42cursus - id: 21)
+    val mainCursusSkills = userProfile.cursus_users
+        .firstOrNull { it.cursus.id == 21 }
+        ?.skills.orEmpty()
+        .sortedByDescending { it.level }  // Ordenamos por nivel descendente
 
     Column(
         modifier = Modifier
@@ -670,20 +686,64 @@ fun SkillsScreen(
             .background(Color.Yellow)
             .padding(16.dp)
     ) {
-        // Versión correcta de LazyColumn con items
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(userSkills) { skill ->  // skill es de tipo UserProfile.UserSkill
-                SkillItem(
-                    name = skill.name,
-                    percentage = skill.level.toInt()
+        // Cabecera
+        Text(
+            text = "SKILLS",
+            color = Color.Black,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(bottom = 16.dp)
+        )
+
+        if (mainCursusSkills.isEmpty()) {
+            // Si no hay skills, mostramos un mensaje
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No se encontraron skills disponibles",
+                    color = Color.Black,
+                    fontSize = 18.sp
                 )
             }
+        } else {
+            // Si hay skills, mostramos la lista
+            LazyColumn(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(mainCursusSkills) { skill ->
+                    // Convertimos el nivel a porcentaje (asumiendo que el máximo es 10.0)
+                    val percentage = ((skill.level / 10f) * 100).toInt().coerceIn(0, 100)
+                    SkillItem(name = skill.name, percentage = percentage)
+                }
+            }
+        }
+
+        // Botón para volver al perfil
+        Button(
+            onClick = { navController.popBackStack() },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color.Black
+            ),
+            shape = RoundedCornerShape(8.dp)
+        ) {
+            Text(
+                text = "BACK",
+                color = Color.Yellow,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                modifier = Modifier.padding(8.dp)
+            )
         }
     }
 }
-
 
 @Composable
 fun SkillItem(name: String, percentage: Int) {

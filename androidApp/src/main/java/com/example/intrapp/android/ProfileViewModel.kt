@@ -65,23 +65,6 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
-    fun loadUserSkills() {
-        viewModelScope.launch {
-            try {
-                _skillsLoaded.value = false
-                val skills = Api42().getUserSkills()
-                SessionManager.userProfile = SessionManager.userProfile?.copy(
-                    skills = skills
-                )
-                _skillsLoaded.value = true
-                Log.d("ViewModel", "Skills calculadas: ${skills.size}")
-            } catch (e: Exception) {
-                Log.e("ViewModel", "Error calculando skills", e)
-                _skillsLoaded.value = false
-                _errorMessage.value = "Error calculando habilidades: ${e.message}"
-            }
-        }
-    }
 
 
 }
