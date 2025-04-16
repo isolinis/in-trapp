@@ -3,12 +3,11 @@ import shared
 
 class ProfileViewModel: ObservableObject {
 
-    // Estado de Perfil (false inicialmente)
+    // Estados
     @Published var profileLoaded: Bool = false
-    // Estado Proyectos (false inicialmente)
     @Published var projectsLoaded: Bool = false
-
     @Published var projects: [Project] = []
+    @Published var userProfile: UserProfile?
 
     // Función para manejar el callback de OAuth
     func handleAuthCallback(code: String) {
@@ -27,7 +26,6 @@ class ProfileViewModel: ObservableObject {
             }
         }
 
-    // Función para cargar los proyectos
     func loadProjects() {
 
         // si ya hay proyectos cargados (sincrónico)

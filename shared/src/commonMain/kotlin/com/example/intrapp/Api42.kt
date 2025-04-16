@@ -126,7 +126,22 @@ class Api42() {
         }.decodeFromString<UserProfile>(profileJson) // Ignora las claves que no están en el modelo
         SessionManager.userProfile = userProfile
 
+        //println("[API42] getProfile() : USER PROFILE MODEL: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}\")")
 
+    }
+
+    // Función wrapper para Swift que llama a getProfile
+    @Throws(Throwable::class)
+    fun getProfileWrapper() {
+        return runBlocking {
+            try {
+                getProfile()
+            } catch (e: Exception) {
+                // Limpiar el perfil en caso de error
+                SessionManager.userProfile = null
+                throw e
+            }
+        }
     }
 
     suspend fun getProjects() {

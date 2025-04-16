@@ -35,6 +35,8 @@ struct AppView: View {
                             ProfileView(navigationPath: $navigationPath)
                         case "projects":
                             ProjectsView(navigationPath: $navigationPath)
+                        case "skills":
+                            SkillsView(navigationPath: $navigationPath)
                         default:
                             LoginView(navigationPath: $navigationPath)
                         }

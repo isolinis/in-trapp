@@ -9,120 +9,101 @@ struct ProfileView: View {
     private let customYellow = Color(red: 1.0, green: 0.988, blue: 0.0)
     private let customBlack = Color.black
 
+    // Tamaños definitivos
+    private let avatarSize: CGFloat = 220
+    private let buttonHeight: CGFloat = 50
+    private let logoutButtonSize: CGFloat = 100  // Tamaño aumentado
+    private let horizontalPadding: CGFloat = 40
+    private let buttonSpacing: CGFloat = 40      // Espaciado duplicado entre botones
+
     var body: some View {
         ZStack {
             customBlack.ignoresSafeArea()
 
-            VStack {
-                ScrollView {
-                    VStack(alignment: .center, spacing: 16) {
-                        // AVATAR
+            GeometryReader { geometry in
+                VStack(spacing: 0) {
+                    // 1. BLOQUE AVATAR (con espacio inferior añadido)
+                    VStack {
                         ZStack {
                             Circle()
                                 .fill(customYellow)
-                                .frame(width: 220, height: 220)
+                                .frame(width: avatarSize, height: avatarSize)
 
                             if let imageUrl = profile?.image?.link, let url = URL(string: imageUrl) {
                                 AsyncImage(url: url) { phase in
-                                    switch phase {
-                                    case .success(let image):
+                                    if case .success(let image) = phase {
                                         image
                                             .resizable()
                                             .scaledToFill()
-                                            .frame(width: 220, height: 220)
+                                            .frame(width: avatarSize, height: avatarSize)
                                             .clipShape(Circle())
-                                    case .failure:
-                                        Circle()
-                                            .fill(Color.gray)
-                                    case .empty:
-                                        ProgressView()
-                                    @unknown default:
-                                        EmptyView()
+                                    } else {
+                                        Circle().fill(Color.gray)
                                     }
                                 }
                             } else {
-                                Circle()
-                                    .fill(Color.gray)
+                                Circle().fill(Color.gray)
                             }
                         }
-                        .padding(.top, 40)
+                        .padding(.top, 90)
+                        .padding(.bottom, 30)
+                    }
+                    .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 0)
+                    .padding(.bottom, 30)  // Espacio añadido entre avatar e info
 
-                        // INFO
+                    // 2. BLOQUE INFO (con login visible)
+                    VStack(spacing: 12) {
                         if let profile = profile {
-                            Text(profile.login)
-                                .font(.system(size: 25, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.top, 16)
+                            Text(profile.login)  // Login visible aquí
+                                .font(.system(size: 22, weight: .bold))
+                                .padding(.bottom, 4)
 
                             Text("\(profile.first_name ?? "") \(profile.last_name ?? "")")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
+                                .font(.system(size: 16))
 
                             Text("email: \(profile.email)")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
+                                .font(.system(size: 16))
 
-                            Text("Level: \(profile.level)")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
+                            Text("Level: \(profile.level ?? 0)")
+                                .font(.system(size: 16))
 
-                            Text("Wallet: \(profile.wallet)")
-                                .font(.system(size: 18))
-                                .foregroundColor(.white)
-
-
+                            Text("Wallet: \(profile.wallet ?? 0)")
+                                .font(.system(size: 16))
                         }
+                    }
+                    .foregroundColor(.white)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 50)
 
-                        Spacer().frame(height: 50)
 
-                        // BOTÓN PROJECTS
-                        Button(action: {
-                            viewModel.loadProjects()
-                            navigationPath.append("projects")
-                        }) {
-                            Text("PROJECTS")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(customYellow)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(customBlack)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(customYellow, lineWidth: 2)
-                                )
-                        }
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 40)
+                    // 3. BLOQUE BOTONES
+                    VStack(spacing: 30) {
+                        customButton(
+                            title: "PROJECTS",
+                            action: {
+                                viewModel.loadProjects()
+                                navigationPath.append("projects")
+                            }
+                        )
 
-                        // BOTÓN SKILLS
-                        Button(action: {
-                            viewModel.loadProjects()
-                            navigationPath.append("projects")
-                        }) {
-                            Text("PROJECTS")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(customYellow)
-                                .frame(maxWidth: .infinity)
-                                .padding()
-                                .background(customBlack)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .stroke(customYellow, lineWidth: 2)
-                                )
-                        }
-                        .padding(.horizontal, 40)
-                        .padding(.bottom, 40)
+                        customButton(
+                            title: "SKILLS",
+                            action: {
+                                navigationPath.append("skills")
+                            }
+                        )
 
-                        // BOTÓN DE LOGOUT
+
+
+                        // Botón LOGOUT (más grande)
                         Button(action: {
                             SessionManager.shared.clearSession()
                             navigationPath.removeLast(navigationPath.count)
                         }) {
                             Text("LOG OUT")
-                                .font(.system(size: 16, weight: .bold, design: .default))
-                                .multilineTextAlignment(.center)
-                                .foregroundColor(customBlack)
-                                .frame(width: 100, height: 100)
+                                .font(.system(size: 16, weight: .black))  // Texto más grande
+                                .frame(width: logoutButtonSize, height: logoutButtonSize)
                                 .background(customYellow)
                                 .clipShape(Circle())
                                 .overlay(
@@ -130,13 +111,34 @@ struct ProfileView: View {
                                         .stroke(customBlack, lineWidth: 2)
                                 )
                         }
-                        .padding(.bottom, 20)
+                        .foregroundColor(customBlack)
+                        .padding(.bottom, 30)  // Margen inferior seguro
                     }
-                    .frame(maxWidth: .infinity)
+                    .padding(.horizontal,40)
+                    .padding(.bottom, 50)
                 }
+                .frame(width: geometry.size.width, height: geometry.size.height)
             }
         }
+        .edgesIgnoringSafeArea(.all)
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
+    }
+
+    // Función para botones custom (con padding interno)
+    private func customButton(title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 18, weight: .bold))
+                .padding(.horizontal, 20)
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+                .frame(height: buttonHeight)
+                .foregroundColor(customYellow)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(customYellow, lineWidth: 2)
+                )
+        }
     }
 }

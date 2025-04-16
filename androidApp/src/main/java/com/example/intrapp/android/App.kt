@@ -61,24 +61,19 @@ import com.example.intrapp.Project
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
-import com.example.intrapp.UserProfile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.math.log
 
 //-------------------------//APP NAVEGADOR//---------------------------//
 
@@ -541,8 +536,8 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
 
     val listState = rememberLazyListState()    // Mantener el estado de la lista
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val itemHeight = 80.dp
-    val circleHeight = 60.dp
+    val itemHeight = 100.dp
+    val circleHeight = 80.dp
     val padding = 12.dp
 
     // Para centrar
@@ -655,9 +650,8 @@ fun SkillsScreen(
 ) {
     val userProfile = SessionManager.userProfile
 
-    // Verificamos si hay un perfil cargado y si tiene skills
+    // Verificamos si hay un perfil cargado
     if (userProfile == null) {
-        // Si no hay perfil, mostramos un mensaje
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -674,7 +668,7 @@ fun SkillsScreen(
         return
     }
 
-    // Obtenemos todas las skills del cursus principal (42cursus - id: 21)
+    // Obtenemos las skills del cursus principal (42cursus - id: 21)
     val mainCursusSkills = userProfile.cursus_users
         .firstOrNull { it.cursus.id == 21 }
         ?.skills.orEmpty()
@@ -684,15 +678,18 @@ fun SkillsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.Yellow)
+            .systemBarsPadding() // Evita que el contenido se dibuje bajo la barra de estado
             .padding(16.dp)
     ) {
-        // Cabecera
         Text(
             text = "SKILLS",
             color = Color.Black,
-            fontSize = 24.sp,
+            fontSize = 34.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 16.dp)
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally) // Añade esto para centrar horizontalmente
+                .padding(top = 16.dp, bottom = 24.dp)
         )
 
         if (mainCursusSkills.isEmpty()) {
@@ -704,31 +701,39 @@ fun SkillsScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No se encontraron skills disponibles",
+                    text = "No skills found",
                     color = Color.Black,
                     fontSize = 18.sp
                 )
             }
         } else {
-            // Si hay skills, mostramos la lista
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+            // Si hay skills, mostramos las barras verticales
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                items(mainCursusSkills) { skill ->
-                    // Convertimos el nivel a porcentaje (asumiendo que el máximo es 10.0)
-                    val percentage = ((skill.level / 10f) * 100).toInt().coerceIn(0, 100)
-                    SkillItem(name = skill.name, percentage = percentage)
+                // BARRAS
+                LazyRow(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp), // Más espacio entre barras
+                    contentPadding = PaddingValues(horizontal = 16.dp), // Padding a los lados
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    items(mainCursusSkills) { skill ->
+                        val percentage = ((skill.level / 10f) * 100).toInt().coerceIn(0, 100)
+                        VerticalSkillItem(name = skill.name, percentage = percentage)
+                    }
                 }
             }
         }
 
-        // Botón para volver al perfil
+        // Botón para volver al perfil - con más margen inferior
         Button(
             onClick = { navController.popBackStack() },
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 16.dp),
+                .padding(vertical = 24.dp), // Más espacio arriba y abajo
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color.Black
             ),
@@ -746,7 +751,7 @@ fun SkillsScreen(
 }
 
 @Composable
-fun SkillItem(name: String, percentage: Int) {
+fun VerticalSkillItem(name: String, percentage: Int) {
     var animationPlayed by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
@@ -756,45 +761,60 @@ fun SkillItem(name: String, percentage: Int) {
     val animatedProgress by animateFloatAsState(
         targetValue = if (animationPlayed) percentage / 100f else 0f,
         animationSpec = tween(
-            durationMillis = 1000,
+            durationMillis = 1500,
             easing = FastOutSlowInEasing
         )
     )
 
-    Column {
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(100.dp) // Barras más anchas (para que entren ~3 por pantalla)
+    ) {
+        // Contenedor de la barra - más ancho
+        Box(
+            modifier = Modifier
+                .width(70.dp) // Barra más gruesa
+                .height(300.dp) // Barra más alta
+                .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                .background(Color.DarkGray)
+        ) {
+            // Barra animada que se llena desde abajo
+            Box(
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .fillMaxHeight(animatedProgress)
+                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                    .background(Color.Black)
+            ) {
+                // Porcentaje en la parte superior de la barra de progreso
+                if (percentage > 10) {
+                    Text(
+                        text = "$percentage%",
+                        color = Color.White,
+                        fontSize = 12.sp,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 8.dp)
+                    )
+                }
+            }
+        }
+
+        // Nombre de la skill debajo de la barra
         Text(
             text = name,
             color = Color.Black,
-            fontSize = 18.sp,
+            fontSize = 14.sp,
             fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(bottom = 4.dp)
-        )
-
-        Box(
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
             modifier = Modifier
-                .fillMaxWidth()
-                .height(24.dp)
-                .clip(RoundedCornerShape(12.dp))
-                .background(Color.DarkGray)
-        ) {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth(animatedProgress)
-                    .fillMaxHeight()
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color.Black)
-            )
-
-            Text(
-                text = "$percentage%",
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .align(Alignment.CenterEnd)
-                    .padding(end = 8.dp)
-            )
-        }
+                .width(100.dp)
+                .padding(top = 12.dp)
+        )
     }
 }
 
