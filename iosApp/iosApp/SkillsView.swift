@@ -56,6 +56,8 @@ struct SkillsView: View {
                     .font(.system(size: 20, weight: .bold))
             }
         }
+        .navigationBarBackButtonHidden(true) // Oculta el botón Back
+        .navigationBarHidden(true) // Oculta toda la barra de navegación
     }
 }
 

@@ -46,17 +46,14 @@ struct AppView: View {
                 .onOpenURL { url in handleIncomingURL(url) }
                 //5. Navegar entre pantallas
                 .onChange(of: viewModel.profileLoaded) { newValue in
-                    if newValue {
-                        // Navegar a Profile y eliminar Loading del backstack
-                        navigationPath.removeLast(navigationPath.count) // Elimina todas las pantallas
-                        navigationPath.append("profile")
-                    }
-                    //este cacho no tienen mucho sentido no? nunca va a pasar, se quedaria en loading eternamente  porque profileloaded no cambiaria su sestado
-                    //CAMBIAR A MANEJO DE ERROR CON UN TIEMOUT O ERROR
-                    else {
-                        // Navegar a Login y eliminar Loading del backstack
-                        navigationPath.removeLast(navigationPath.count) // Elimina todas las pantallas
-                        navigationPath.append("login")
+                    DispatchQueue.main.async {
+                        if newValue {
+                            navigationPath.removeLast(navigationPath.count)
+                            navigationPath.append("profile")
+                        } else if navigationPath.count > 0 { // Solo si no está vacío
+                            navigationPath.removeLast(navigationPath.count)
+                            navigationPath.append("login")
+                        }
                     }
                 }
     }

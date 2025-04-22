@@ -39,6 +39,8 @@ struct LoginView: View {
                 }
             }
         }
+        .navigationBarBackButtonHidden(true) // Oculta el botón Back
+        .navigationBarHidden(true) // Oculta toda la barra de navegación
         .onAppear {
             setupVideoPlayer()
         }

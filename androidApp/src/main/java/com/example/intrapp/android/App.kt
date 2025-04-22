@@ -73,6 +73,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 //-------------------------//APP NAVEGADOR//---------------------------//
@@ -90,16 +91,15 @@ fun App(viewModel: ProfileViewModel) {
 
     // 4. Navegar entre pantallas : autentificado ->profile, default ->login
     LaunchedEffect(profileLoaded) {
-        if (profileLoaded) {
-            navController.navigate("profile") {
-                popUpTo("loading") { inclusive = true } // Elimina la pantalla de loading del backstack
+            when {
+            profileLoaded -> {
+                navController.navigate("profile") {
+                    popUpTo("loading") { inclusive = true }
+                }
             }
-        }
-        //este cacho no tienen mucho sentido no? nunca va a pasar, se quedaria en loading eternamente  porque profileloaded no cambiaria su sestado
-        //CAMBIAR A MANEJO DE ERROR CON UN TIEMOUT O ERROR (MAS ABAJO)
-        else {
-            navController.navigate("login") {
-                popUpTo("loading") { inclusive = true } // Elimina la pantalla de loading del backstack
+            else -> {
+            //este cacho no tienen mucho sentido no? nunca va a pasar, se quedaria en loading eternamente  porque profileloaded no cambiaria su sestado
+            // MANEJO DE ERROR CON UN TIEMOUT en Loadingscreen
             }
         }
     }
@@ -107,7 +107,13 @@ fun App(viewModel: ProfileViewModel) {
     // 5. Configurar NavHost
     NavHost(navController, startDestination = "login") {
         composable("loading") {
-            LoadingScreen() // Pantalla de carga
+            LoadingScreen(
+                onTimeout = {
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true }
+                    }
+                }
+            )
         }
         composable("login") {
             LoginScreen(navController, viewModel)
@@ -200,6 +206,16 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
     val profileLoaded by viewModel.profileLoaded.collectAsState()
     val profile = SessionManager.userProfile
 
+    // Si no hay perfil, redirigir
+    if (profile == null) {
+        LaunchedEffect(Unit) {
+            navController.navigate("login") {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+        return LoadingScreen()
+    }
+
     // Aumenté el lineHeight y añadí más espacio entre elementos
     val profileTextStyle = TextStyle(
         color = Color.White,
@@ -240,7 +256,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                             .background(Color.Black)
                     ) {
                         AsyncImage(
-                            model = profile!!.image?.link,
+                            model = profile?.image?.link,
                             contentDescription = "Avatar",
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop
@@ -283,7 +299,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                     }
                 }
 
-                // Botones
+                // BOTONES
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -349,8 +365,19 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                     Box(
                         modifier = Modifier
                             .clickable {
-                                SessionManager.clearSession()
-                                navController.navigate("login") { popUpTo(0) { inclusive = true } }
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    // 1. Navegar primero a login (fuera de la corrutina )
+                                    navController.navigate("login") {
+                                        popUpTo(0) { inclusive = true }
+                                        launchSingleTop = true
+                                    }
+
+                                    // 2. Limpiar datos
+                                    delay(100) //  asegurar
+                                    viewModel.resetState()
+                                    SessionManager.clearSession()
+                                    Log.d("LOGOUT", "Logout completado")
+                                }
                             }
                             .size(110.dp) // Mismo tamaño que en iOS (100x100)
                             .background(Color.Yellow, CircleShape) // Fondo amarillo circular
@@ -372,7 +399,13 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 }
 
 @Composable
-fun LoadingScreen() {
+fun LoadingScreen(onTimeout: () -> Unit = {}) {
+
+    LaunchedEffect(Unit) {
+        delay(30000) // 30 segundos timeout y fuera
+        onTimeout()
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()

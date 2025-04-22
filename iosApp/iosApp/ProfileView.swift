@@ -17,112 +17,129 @@ struct ProfileView: View {
     private let buttonSpacing: CGFloat = 40      // Espaciado duplicado entre botones
 
     var body: some View {
+
+    // Protección contra perfil nulo (sin cambiar lógica)
+    if SessionManager.shared.userProfile == nil {
+        EmptyView()
+            .onAppear {
+                navigationPath.removeLast(navigationPath.count)
+                navigationPath.append("login")
+            }
+    } else {
         ZStack {
             customBlack.ignoresSafeArea()
 
             GeometryReader { geometry in
-                VStack(spacing: 0) {
-                    // 1. BLOQUE AVATAR (con espacio inferior añadido)
-                    VStack {
-                        ZStack {
-                            Circle()
-                                .fill(customYellow)
-                                .frame(width: avatarSize, height: avatarSize)
+                    VStack(spacing: 0) {
+                        // 1. BLOQUE AVATAR (con espacio inferior añadido)
+                        VStack {
+                            ZStack {
+                                Circle()
+                                    .fill(customYellow)
+                                    .frame(width: avatarSize, height: avatarSize)
 
-                            if let imageUrl = profile?.image?.link, let url = URL(string: imageUrl) {
-                                AsyncImage(url: url) { phase in
-                                    if case .success(let image) = phase {
-                                        image
-                                            .resizable()
-                                            .scaledToFill()
-                                            .frame(width: avatarSize, height: avatarSize)
-                                            .clipShape(Circle())
-                                    } else {
-                                        Circle().fill(Color.gray)
+                                if let imageUrl = profile?.image?.link, let url = URL(string: imageUrl) {
+                                    AsyncImage(url: url) { phase in
+                                        if case .success(let image) = phase {
+                                            image
+                                                .resizable()
+                                                .scaledToFill()
+                                                .frame(width: avatarSize, height: avatarSize)
+                                                .clipShape(Circle())
+                                        } else {
+                                            Circle().fill(Color.gray)
+                                        }
                                     }
+                                } else {
+                                    Circle().fill(Color.gray)
                                 }
-                            } else {
-                                Circle().fill(Color.gray)
+                            }
+                            .padding(.top, 90)
+                            .padding(.bottom, 30)
+                        }
+                        .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 0)
+                        .padding(.bottom, 30)  // Espacio añadido entre avatar e info
+
+                        // 2. BLOQUE INFO (con login visible)
+                        VStack(spacing: 12) {
+                            if let profile = profile {
+                                Text(profile.login)  // Login visible aquí
+                                    .font(.system(size: 22, weight: .bold))
+                                    .padding(.bottom, 4)
+
+                                Text("\(profile.first_name ?? "") \(profile.last_name ?? "")")
+                                    .font(.system(size: 16))
+
+                                Text("email: \(profile.email)")
+                                    .font(.system(size: 16))
+
+                                Text("Level: \(profile.level ?? 0)")
+                                    .font(.system(size: 16))
+
+                                Text("Wallet: \(profile.wallet ?? 0)")
+                                    .font(.system(size: 16))
                             }
                         }
-                        .padding(.top, 90)
-                        .padding(.bottom, 30)
-                    }
-                    .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 0)
-                    .padding(.bottom, 30)  // Espacio añadido entre avatar e info
-
-                    // 2. BLOQUE INFO (con login visible)
-                    VStack(spacing: 12) {
-                        if let profile = profile {
-                            Text(profile.login)  // Login visible aquí
-                                .font(.system(size: 22, weight: .bold))
-                                .padding(.bottom, 4)
-
-                            Text("\(profile.first_name ?? "") \(profile.last_name ?? "")")
-                                .font(.system(size: 16))
-
-                            Text("email: \(profile.email)")
-                                .font(.system(size: 16))
-
-                            Text("Level: \(profile.level ?? 0)")
-                                .font(.system(size: 16))
-
-                            Text("Wallet: \(profile.wallet ?? 0)")
-                                .font(.system(size: 16))
-                        }
-                    }
-                    .foregroundColor(.white)
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 40)
-                    .padding(.bottom, 50)
+                        .foregroundColor(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 40)
+                        .padding(.bottom, 50)
 
 
-                    // 3. BLOQUE BOTONES
-                    VStack(spacing: 30) {
-                        customButton(
-                            title: "PROJECTS",
-                            action: {
-                                viewModel.loadProjects()
-                                navigationPath.append("projects")
+                        // 3. BLOQUE BOTONES
+                        VStack(spacing: 30) {
+                            customButton(
+                                title: "PROJECTS",
+                                action: {
+                                    viewModel.loadProjects()
+                                    navigationPath.append("projects")
+                                }
+                            )
+
+                            customButton(
+                                title: "SKILLS",
+                                action: {
+                                    navigationPath.append("skills")
+                                }
+                            )
+
+
+
+                            // Botón LOGOUT (más grande)
+                            Button(action: {
+                                // 1. Resetear ViewModel (sin lógica nueva)
+                                    viewModel.profileLoaded = false
+
+                                    // 2. Limpiar sesión (existente)
+                                    SessionManager.shared.clearSession()
+
+                                    // 3. Navegar a login (mismo método que ya usas)
+                                    navigationPath.removeLast(navigationPath.count)
+                                    navigationPath.append("login")
+                            }) {
+                                Text("LOG OUT")
+                                    .font(.system(size: 16, weight: .black))  // Texto más grande
+                                    .frame(width: logoutButtonSize, height: logoutButtonSize)
+                                    .background(customYellow)
+                                    .clipShape(Circle())
+                                    .overlay(
+                                        Circle()
+                                            .stroke(customBlack, lineWidth: 2)
+                                    )
                             }
-                        )
-
-                        customButton(
-                            title: "SKILLS",
-                            action: {
-                                navigationPath.append("skills")
-                            }
-                        )
-
-
-
-                        // Botón LOGOUT (más grande)
-                        Button(action: {
-                            SessionManager.shared.clearSession()
-                            navigationPath.removeLast(navigationPath.count)
-                        }) {
-                            Text("LOG OUT")
-                                .font(.system(size: 16, weight: .black))  // Texto más grande
-                                .frame(width: logoutButtonSize, height: logoutButtonSize)
-                                .background(customYellow)
-                                .clipShape(Circle())
-                                .overlay(
-                                    Circle()
-                                        .stroke(customBlack, lineWidth: 2)
-                                )
+                            .foregroundColor(customBlack)
+                            .padding(.bottom, 30)  // Margen inferior seguro
                         }
-                        .foregroundColor(customBlack)
-                        .padding(.bottom, 30)  // Margen inferior seguro
+                        .padding(.horizontal,40)
+                        .padding(.bottom, 50)
                     }
-                    .padding(.horizontal,40)
-                    .padding(.bottom, 50)
+                    .frame(width: geometry.size.width, height: geometry.size.height)
                 }
-                .frame(width: geometry.size.width, height: geometry.size.height)
             }
-        }
         .edgesIgnoringSafeArea(.all)
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
+        }
     }
 
     // Función para botones custom (con padding interno)

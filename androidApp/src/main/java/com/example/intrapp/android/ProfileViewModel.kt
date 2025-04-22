@@ -66,6 +66,13 @@ class ProfileViewModel : ViewModel() {
     }
 
 
+    fun resetState() {
+        _profileLoaded.value = false
+        _projectsLoaded.value = false
+        _skillsLoaded.value = false
+        _errorMessage.value = null
+    }
+
 
 }
 
