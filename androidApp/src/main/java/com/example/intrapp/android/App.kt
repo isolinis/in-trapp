@@ -69,6 +69,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.CoroutineScope
@@ -422,50 +423,110 @@ fun LoadingScreen(onTimeout: () -> Unit = {}) {
 
 @Composable
 fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
+
     // Observar el estado de carga de proyectos
     val projectsLoaded by viewModel.projectsLoaded.collectAsState()
 
     // Obtener los proyectos desde SessionManager
     val projects = SessionManager.userProfile?.projects
 
+    var showError by remember { mutableStateOf(false) }
+
+    //Estado para controlar la visibilidad durante la navegación
+    var isFullyVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        // Asegurar que la pantalla esté completamente visible antes de mostrar cualquier contenido
+        delay(100)  // Pequeño retraso para la transición
+        isFullyVisible = true
+
+        // Temporizador para mostrar error si tarda demasiado
+        delay(5000) // 5 segundos
+        if (!projectsLoaded && projects == null) {
+            showError = true
+        }
+    }
+
+    LaunchedEffect(projectsLoaded) {
+        if (!projectsLoaded && projects == null) {
+            viewModel.loadProjects()
+        }
+    }
+
+    // Limpiar al salir de la pantalla
+    DisposableEffect(Unit) {
+        onDispose {
+            isFullyVisible = false
+        }
+    }
+
     MaterialTheme {
-
-        //VIDEO FONDO // Usa el @componente VideoPlayer
-
-        Box(modifier = Modifier.fillMaxSize().background( Color(0xFFFFFC00))) {
-            // Usar el componente VideoPlayer??
-
-        // PROJECTS
-            if (!projectsLoaded) {
-                LoadingScreen() // Pantalla de carga
-            } else {
-
-                Column(
-                    modifier = Modifier.fillMaxSize(),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
-                ) {
-
-                    if (projects != null) {
-                        ScrollableCircularProjectCarousel(projects = projects, navController)
-
-                    } else {
-                        // Mostrar un mensaje de error si no hay proyectos
-                        Text(text = "Proyectos no encontrados", color = Color.Black)
+        Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFFC00))) {
+            // Solo mostrar contenido cuando la pantalla esté completamente visible
+            if (isFullyVisible) {
+                when {
+                    // 1. Proyectos cargados
+                    projects != null -> {
+                        ScrollableCircularProjectCarousel(
+                            projects = projects!!,
+                            navController = navController
+                        )
                     }
+
+                    // 2. Mientras carga (primeros 5 segundos)
+                    !showError -> {
+                        LoadingScreen()
+                    }
+
+                    // 3. Si pasa el timeout y no hay datos
+                    else -> {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Error cargando proyectos",
+                                color = Color.Red,
+                                fontSize = 20.sp
+                            )
+
+                            Spacer(modifier = Modifier.height(16.dp))
+
+                            Button(
+                                onClick = {
+                                    showError = false
+                                    viewModel.loadProjects()
+                                },
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Color.Black
+                                )
+                            ) {
+                                Text(
+                                    text = "Reintentar",
+                                    color = Color.Yellow
+                                )
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Pantalla de transición durante la navegación
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    // Puedes poner aquí un indicador de carga o simplemente dejarlo vacío
                 }
             }
 
-
-        //BOTON ATRAS
+            //BOTON ATRAS
             ButtonBack(
                 navController = navController,
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(16.dp, 50.dp)
             )
-
-
         }
     }
 }
@@ -475,7 +536,14 @@ fun SelectedProjectScreen(
     navController: NavController,
     projectId: Int // ID del proyecto seleccionado
 ) {
+
+    // Clave: Guardar el proyecto en una variable local cuando se monta el componente
+    val projectSnapshot = remember(projectId) {
+        SessionManager.userProfile?.projects?.find { it.project.id == projectId }
+    }
+    //  Obtener proyectos solo mientras la pantalla está activa
     val project = SessionManager.userProfile?.projects?.find { it.project.id == projectId }
+
 
 
     Box(
@@ -483,74 +551,76 @@ fun SelectedProjectScreen(
             .fillMaxSize()
             .background(Color.Yellow)
     ) {
-        if (project != null) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(250.dp)
-                        .background(Color.Black, CircleShape)
-                        .padding(bottom = 24.dp),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = project.project.name,
-                        color = Color.White,
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(24.dp)
-                    )
-                }
-
-                Spacer(modifier = Modifier.height(16.dp))
-
-                // INFO
+        if (projectSnapshot != null) {
+            if (project != null) {
                 Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(24.dp) // Más espacio
+                    verticalArrangement = Arrangement.Center
                 ) {
-                    Text(
-                        text = "Final Mark: ${project.finalMark ?: "No available"}",
-                        fontSize = 22.sp, // Texto más grande
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(250.dp)
+                            .background(Color.Black, CircleShape)
+                            .padding(bottom = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = project!!.project.name,
+                            color = Color.White,
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(24.dp)
+                        )
+                    }
 
-                    Text(
-                        text = "Status: ${project.status}",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                    Text(
-                        text = "Updated At:\n ${project.updatedAt}",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    )
+                    // INFO
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(24.dp) // Más espacio
+                    ) {
+                        Text(
+                            text = "Final Mark: ${project!!.finalMark ?: "No available"}",
+                            fontSize = 22.sp, // Texto más grande
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text(
+                            text = "Status: ${project!!.status}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Text(
+                            text = "Updated At:\n ${project!!.updatedAt}",
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Medium,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+
+                    Spacer(modifier = Modifier.height(50.dp))
                 }
-
-
-                Spacer(modifier = Modifier.height(50.dp))
+            } else {
+                Text(
+                    text = "Proyecto no encontrado",
+                    color = Color.Red,
+                    fontSize = 20.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.align(Alignment.Center)
+                )
             }
-        } else {
-            Text(
-                text = "Proyecto no encontrado",
-                color = Color.Red,
-                fontSize = 20.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.align(Alignment.Center)
-            )
         }
 
         //BOTON ATRAS
