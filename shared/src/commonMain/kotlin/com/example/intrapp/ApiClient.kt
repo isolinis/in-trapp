@@ -37,7 +37,33 @@ class ApiClient {
         }
     }
 
-    // Cierra el cliente cuando ya no sea necesario (opcional)
+    suspend fun getWithAuth(
+        url: String,
+        headers: Map<String, String> = emptyMap(),
+        api42: Api42 // Necesitarás pasar una instancia de Api42
+    ): HttpResponse? {
+        // 1. Primera llamada con el token actual
+        var response = get(url, headers + authHeader())
+
+        // 2. Si el token expiró (401), refrescar y reintentar
+        if (response?.status?.value == 401) {
+            if (Api42().refreshToken()) { // <- Llama a refreshToken()
+                response = get(url, headers + authHeader()) // Nueva llamada con token fresco
+            } else {
+                throw Exception("No se pudo refrescar el token. Vuelve a iniciar sesión.")
+            }
+        }
+        return response
+    }
+
+    // Función auxiliar para construir el header de autenticación
+    private fun authHeader(): Map<String, String> {
+        return mapOf(
+            HttpHeaders.Authorization to "Bearer ${SessionManager.access_token}"
+        )
+    }
+
+    // Cierra el cliente cuando ya no sea necesario
     fun close() {
         client.close()
     }

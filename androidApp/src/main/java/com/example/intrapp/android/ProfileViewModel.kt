@@ -1,6 +1,8 @@
 package com.example.intrapp.android
 
+import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intrapp.Api42
@@ -22,34 +24,33 @@ class ProfileViewModel : ViewModel() {
     private val _projectsLoaded = MutableStateFlow(false)
     val projectsLoaded: StateFlow<Boolean> = _projectsLoaded
 
-    // Estado para skills
-    private val _skillsLoaded = MutableStateFlow(false)
-    val skillsLoaded: StateFlow<Boolean> = _skillsLoaded
-
-    // Estado para errores
-    private val _errorMessage = MutableStateFlow<String?>(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
-
+    // Estado para errores de autenticación
+    private val _authError = MutableStateFlow<String?>(null)
+    val authError: StateFlow<String?> = _authError
 
     // Función para manejar el callback de OAuth
     fun handleAuthCallback(code: String) {
         viewModelScope.launch {
             try {
-                println("[VIEWMODEL] HandleAuthcallback(code: $code)")
+                println("[VIEWMODEL] Code: $code")
 
-                // Llamar a handleCallback
+                // Llamar a API42
                 Api42().handleCallback(code)
                 _profileLoaded.value = true
 
-                println("[VIEWMODEL]: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}")
+                println("[VIEWMODEL]: Profile loaded: ${SessionManager.userProfile?.id}, ${SessionManager.userProfile?.login}, ${SessionManager.userProfile?.email}, ${SessionManager.userProfile?.location}, ${SessionManager.userProfile?.wallet}")
 
             } catch (e: Exception) {
-                println("[VIEWMODEL]: Error al cargar el perfil: $e")
+                println("[VIEWMODEL]: (ERROR) Error al cargar el perfil: $e")
                 _profileLoaded.value = false
+                _authError.value = "Error de autenticación: ${e.message}"
             }
         }
     }
 
+    fun clearAuthError() {
+        _authError.value = null
+    }
 
     // Función para cargar los proyectos
     fun loadProjects() {
@@ -69,8 +70,7 @@ class ProfileViewModel : ViewModel() {
     fun resetState() {
         _profileLoaded.value = false
         _projectsLoaded.value = false
-        _skillsLoaded.value = false
-        _errorMessage.value = null
+        _authError.value = null
     }
 
 

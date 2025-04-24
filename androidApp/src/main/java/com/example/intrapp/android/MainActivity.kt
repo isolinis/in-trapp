@@ -2,29 +2,40 @@ package com.example.intrapp.android
                                                                                                                                       
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log                                                                                                               
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity                                                                                            
 import androidx.activity.compose.setContent                                                                                           
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import androidx.activity.viewModels
-import com.example.intrapp.android.ProfileViewModel
-
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.example.intrapp.ApiClient
+import kotlinx.coroutines.launch
 
 
 class MainActivity : ComponentActivity() {
 
-    // Declara viewModel
     private val viewModel: ProfileViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Observa los errores de autenticación
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.authError.collect { error ->
+                    error?.let {
+                        Toast.makeText(this@MainActivity, it, Toast.LENGTH_LONG).show()
+                        viewModel.clearAuthError()
+                    }
+                }
+            }
+        }
+
+
 
         // Configuración inicial de la UI
         setContent {
@@ -45,22 +56,21 @@ class MainActivity : ComponentActivity() {
     //Recibe el callback y procede a flujo WebFlowApplicaton de OAuth
     private fun handleIntent(intent: Intent?) {
 
+        //Caso de Intent sin data , probablemente launcher. No es callback
+        val uri = intent?.data ?: return
 
-        val uri = intent?.data ?: return //Intent sin data , probablemente launcher. No es callback
+        //Si es callback, extrae CODE y lo manda a VIEWMODEL
         val code = uri.getQueryParameter("code") ?: return //Extraer code
-
         Log.d("AuthIntra", "Authorization code received: $code")
-
-            // Usar el ViewModel para manejar el callback:
-
-            viewModel.handleAuthCallback(code)
-
-            //CoroutineScope(Dispatchers.IO).launch {
-                //val profile = Api42().handleCallback(code)
-                //Log.d("AuthIntra", "Profile received: $profile")
-            //}
+        viewModel.handleAuthCallback(code)
 
         this.intent = Intent()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        ApiClient().close() // <- Cierra el cliente aquí
+        Log.d("[APP]", "HttpClient cerrado")
     }
 
 }

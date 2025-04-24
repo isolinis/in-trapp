@@ -56,12 +56,24 @@ struct AppView: View {
                         }
                     }
                 }
+                .alert("Error de autenticación", isPresented: Binding<Bool>(
+                     get: { viewModel.authError != nil },
+                     set: { _ in viewModel.authError = nil }
+                )) {
+                     Button("OK", role: .cancel) { }
+                } message: {
+                     Text(viewModel.authError ?? "Error desconocido")
+                }
     }
 
     func handleIncomingURL(_ url: URL) {
         guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
               let code = components.queryItems?.first(where: { $0.name == "code" })?.value else {
             print("No se encontró el code en la URL")
+            viewModel.authError = "URL de callback inválida"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+               viewModel.authError = nil
+            }
             return
         }
         viewModel.handleAuthCallback(code: code)

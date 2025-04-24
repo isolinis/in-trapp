@@ -8,6 +8,7 @@ class ProfileViewModel: ObservableObject {
     @Published var projectsLoaded: Bool = false
     @Published var projects: [Project] = []
     @Published var userProfile: UserProfile?
+    @Published var authError: String? = nil
 
     // Función para manejar el callback de OAuth
     func handleAuthCallback(code: String) {
@@ -16,11 +17,18 @@ class ProfileViewModel: ObservableObject {
                     try Api42().handleCallbackWrapper(code: code)
                     DispatchQueue.main.async {
                         self.profileLoaded = true
+                        self.authError = nil
                     }
                 } catch {
                     print("Error handling auth callback: \(error)")
                     DispatchQueue.main.async {
                         self.profileLoaded = false
+                        self.authError = error.localizedDescription
+                        // Limpiar el error después de 3 segundos
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                           self.authError = nil
+                        }
+
                     }
                 }
             }
@@ -48,13 +56,33 @@ class ProfileViewModel: ObservableObject {
                         self.projectsLoaded = true
                     }
                 } catch {
-                    print(" Error al cargar los proyectos : \(error.localizedDescription)")
+                    print("Error al cargar proyectos: \(error.localizedDescription)")
+
+                    // Intentar refrescar el token si el error es 401
+                    if error.localizedDescription.contains("401") {
+                        do {
+                            let refreshSuccess = try await Api42().refreshTokenWrapper()
+                            if refreshSuccess.boolValue {
+                                // Reintentar después de refrescar
+                                try await Api42().getProjectsWrapper()
+                                if let userProfile = SessionManager.shared.userProfile {
+                                    self.projects = userProfile.projects
+                                    self.projectsLoaded = true
+                                    return
+                                }
+                            }
+                        } catch {
+                            print("Error al refrescar token: \(error.localizedDescription)")
+                        }
+                    }
+
                     self.projectsLoaded = false
                     self.projects = []
                 }
             }
         }
     }
+}
 
 
-    }
+

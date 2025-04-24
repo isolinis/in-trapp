@@ -146,6 +146,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
     val context = LocalContext.current
     var videoFinished by remember { mutableStateOf(false) }
 
+
     MaterialTheme {
 
         //VIDEO FONDO // Usa el @componente VideoPlayer
@@ -166,6 +167,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
                 ) {
                     Button(
                         onClick = {
+                            viewModel.clearAuthError()//  Limpia errores previos
                             // Navegar a la pantalla de carga
                             navController.navigate("loading")
                             // Iniciar flujo OAuth
@@ -955,14 +957,14 @@ fun ProgressBar(level: Double, maxLevel: Int = 21, modifier: Modifier = Modifier
         modifier = modifier
             .fillMaxWidth()
             .height(20.dp)
-            .padding(horizontal = 16.dp) // Márgenes laterales para la barra
-            .background(Color.DarkGray, RoundedCornerShape(10.dp)) // Fondo gris oscuro con esquinas redondeadas
+            .padding(horizontal = 16.dp)
+            .background(Color.DarkGray, RoundedCornerShape(10.dp))
     ) {
         //BARRA AMARILLA
         Box(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(progress)  // barra amarilla basado en el progreso
+                .fillMaxWidth(progress)
                 .background(Color.Yellow, RoundedCornerShape(10.dp))
         ) {
             Text(
@@ -972,61 +974,9 @@ fun ProgressBar(level: Double, maxLevel: Int = 21, modifier: Modifier = Modifier
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 ),
-                modifier = Modifier.align(Alignment.Center) // Centra el texto dentro de la barra
+                modifier = Modifier.align(Alignment.Center)
             )
         }
     }
 }
 
-
-
-
-
-
-
-
-//ESTILOS DE TEXTO REUTILIZABLES
-
-
-
-///MANEJO DE ERROR EN AUTH:
-/* EN ProfileViewModel:
-private val _authError = MutableStateFlow<String?>(null)
-val authError: StateFlow<String?> = _authError
-
-fun handleAuthCallback(code: String) {
-    viewModelScope.launch {
-        try {
-            Api42().handleCallback(code)
-            _profileLoaded.value = true
-        } catch (e: Exception) {
-            _authError.value = e.message // Guardar el mensaje de error
-            _profileLoaded.value = false
-        }
-    }
-}
-
-EN App:
-val authError by viewModel.authError.collectAsState()
-
-LaunchedEffect(profileLoaded, authError) {
-    if (profileLoaded) {
-        navController.navigate("profile") {
-            popUpTo("loading") { inclusive = true }
-        }
-    } else if (authError != null) {
-        navController.navigate("login") {
-            popUpTo("loading") { inclusive = true }
-        }
-    }
-
-EN Loginscreen, mas bien en una nueva ErrorScreen (FUTUROOOOOOOOOO)
-val authError by viewModel.authError.collectAsState()
-
-if (authError != null) {
-    Text(
-        text = "Error: $authError",
-        color = Color.Red
-    )
-}
- */

@@ -3,6 +3,8 @@ package com.example.intrapp
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.float
@@ -105,12 +107,12 @@ class Api42() {
 
         val token = SessionManager.access_token ?: throw Exception("Access token no disponible")
 
-        val response: HttpResponse? = ApiClient().get(
-            url = "https://api.intra.42.fr/v2/me",
-            headers = mapOf(
-                HttpHeaders.Authorization to "Bearer $token"
+        val response: HttpResponse? =
+            ApiClient().getWithAuth( // <- Usar getWithAuth en lugar de get
+                url = "https://api.intra.42.fr/v2/me",
+                headers = emptyMap(),
+                api42 = this // Pasar la instancia actual de Api42
             )
-        )
         if (response == null || response.status.value != 200) {
             throw Exception("Error: No se pudo obtener el perfil")
         }
@@ -152,11 +154,10 @@ class Api42() {
             val userId = SessionManager.userProfile?.id ?: throw Exception("User ID no disponible")
 
             // Hacer la solicitud a la API
-            val response: HttpResponse? = ApiClient().get(
+            val response: HttpResponse? = ApiClient().getWithAuth(
                 url = "https://api.intra.42.fr/v2/users/$userId/projects_users",
-                headers = mapOf(
-                    HttpHeaders.Authorization to "Bearer $token"
-                )
+                headers = emptyMap(),
+                api42 = this // Pasar la instancia actual de Api42
             )
 
             // Verificar la respuesta
@@ -168,7 +169,8 @@ class Api42() {
             val projectsJson = response.bodyAsText()
             println("[API42] getprojects() PROJECTS JSON: $projectsJson")
             // Extraer solo los campos necesarios
-            val projects = Json { ignoreUnknownKeys = true }.decodeFromString<List<Project>>(projectsJson)
+            val projects =
+                Json { ignoreUnknownKeys = true }.decodeFromString<List<Project>>(projectsJson)
 
             // Almacenar los proyectos en SessionManager - Userprofile - Projects
             SessionManager.userProfile?.projects = projects
@@ -191,12 +193,37 @@ class Api42() {
             try {
                 getProjects()
             } catch (e: Exception) {
-                SessionManager.userProfile?.projects = emptyList() //Limpiar projects en caso de error
+                SessionManager.userProfile?.projects =
+                    emptyList() //Limpiar projects en caso de error
                 throw e // Propagar el error
             }
         }
     }
 
+    suspend fun refreshToken(): Boolean {
+        val refreshToken = SessionManager.refresh_token ?: return false
+        val response = ApiClient().post(
+            url = "https://api.intra.42.fr/oauth/token",
+            body = "grant_type=refresh_token&client_id=$client_id&client_secret=$client_secret&refresh_token=$refreshToken"
+        )
+        if (response?.status?.value == 200) {
+            val json = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+            SessionManager.access_token = json["access_token"]?.jsonPrimitive?.content
+            SessionManager.refresh_token = json["refresh_token"]?.jsonPrimitive?.content
+            return true
+        }
+        return false
+    }
+
+    @Throws(Exception::class)
+    suspend fun refreshTokenWrapper(): Boolean {
+        return try {
+            refreshToken()
+        } catch (e: Exception) {
+            false
+        }
+    }
 }
+
 
 
