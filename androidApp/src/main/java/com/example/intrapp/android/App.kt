@@ -3,6 +3,7 @@ package com.example.intrapp.android
 import android.content.Intent
 import android.net.Uri
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -146,6 +147,14 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
     val context = LocalContext.current
     var videoFinished by remember { mutableStateOf(false) }
 
+    // Mostrar error si existe
+    LaunchedEffect(Unit) {
+        SessionManager.lastAuthError?.let { error ->
+            Toast.makeText(context, error, Toast.LENGTH_LONG).show()
+            SessionManager.lastAuthError = null // Limpiar después de mostrar
+
+        }
+    }
 
     MaterialTheme {
 
@@ -157,6 +166,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
                 videoFileName = "loginvideo.mp4",
                 modifier = Modifier.fillMaxSize(),
                 onVideoFinished = { videoFinished = true } // Callback cuando el video termina
+
             )
             if (videoFinished) {
 
@@ -405,7 +415,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 fun LoadingScreen(onTimeout: () -> Unit = {}) {
 
     LaunchedEffect(Unit) {
-        delay(30000) // 30 segundos timeout y fuera
+        delay(3000) // 30 segundos timeout y fuera
         onTimeout()
     }
 

@@ -56,6 +56,12 @@ struct AppView: View {
                         }
                     }
                 }
+                .onChange(of: viewModel.authError) { error in
+                            if error != nil {
+                                navigationPath.removeLast(navigationPath.count)
+                                navigationPath.append("login")
+                            }
+                }
                 .alert("Error de autenticación", isPresented: Binding<Bool>(
                      get: { viewModel.authError != nil },
                      set: { _ in viewModel.authError = nil }

@@ -6,18 +6,29 @@ struct LoadingView: View {
 
     var body: some View {
         ZStack {
-            // Fondo amarillo (#fffc00)
             Color(red: 1.0, green: 0.988, blue: 0.0)
-                .ignoresSafeArea() // Versión más moderna de edgesIgnoringSafeArea
+                .ignoresSafeArea()
 
-            // Indicador de progreso
             ProgressView()
                 .progressViewStyle(CircularProgressViewStyle(tint: .black))
                 .scaleEffect(2.5)
         }
-        // Ocultar elementos de navegación
         .navigationBarBackButtonHidden(true)
         .navigationBarHidden(true)
-        .statusBarHidden(true) // Opcional: oculta también la barra de estado
+        .statusBarHidden(true)
+        // Añade estos 2 modificadores:
+        .onAppear {
+            // Timeout después de 30 segundos
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                if !viewModel.profileLoaded {
+                    navigationPath.removeLast() // Vuelve al login
+                }
+            }
+        }
+        .onChange(of: viewModel.profileLoaded) { loaded in
+            if loaded {
+                navigationPath.append("profile") // Navega al perfil
+            }
+        }
     }
 }

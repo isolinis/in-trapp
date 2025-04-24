@@ -11,6 +11,8 @@ object SessionManager {
 
     var projects: List<Project>? = null
 
+    var lastAuthError: String? = null
+
     fun checkLogIn(): Boolean {
         return access_token != null
     }

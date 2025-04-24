@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import com.example.intrapp.ApiClient
+import com.example.intrapp.SessionManager
 import kotlinx.coroutines.launch
 
 
@@ -59,11 +60,25 @@ class MainActivity : ComponentActivity() {
         //Caso de Intent sin data , probablemente launcher. No es callback
         val uri = intent?.data ?: return
 
-        //Si es callback, extrae CODE y lo manda a VIEWMODEL
-        val code = uri.getQueryParameter("code") ?: return //Extraer code
-        Log.d("AuthIntra", "Authorization code received: $code")
-        viewModel.handleAuthCallback(code)
+        // //Si es callback,  Analizar la URL de callback
+        when {
+            uri.getQueryParameter("error") != null -> {
+                val error = uri.getQueryParameter("error_description") ?: "Error desconocido"
+                Log.e("OAUTH_ERROR", "$error")
 
+                // Forzar cierre del browser y volver a la app!!!!!!
+
+
+                return
+            }
+
+            uri.getQueryParameter("code") != null -> {
+                // 200 -  extrae CODE y lo manda a VIEWMODEL
+                val code = uri.getQueryParameter("code")!!
+                Log.d("AuthIntra", "Authorization code received: $code")
+                viewModel.handleAuthCallback(code)
+            }
+        }
         this.intent = Intent()
     }
 
