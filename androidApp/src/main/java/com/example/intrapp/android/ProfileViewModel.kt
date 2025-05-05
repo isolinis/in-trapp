@@ -1,14 +1,11 @@
 package com.example.intrapp.android
 
-import android.content.Context
+
 import android.util.Log
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.intrapp.Api42
-import com.example.intrapp.Project
 import com.example.intrapp.SessionManager
-import com.example.intrapp.UserProfile
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch

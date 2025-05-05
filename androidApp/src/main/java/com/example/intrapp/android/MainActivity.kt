@@ -66,8 +66,6 @@ class MainActivity : ComponentActivity() {
                 val error = uri.getQueryParameter("error_description") ?: "Error desconocido"
                 Log.e("OAUTH_ERROR", "$error")
 
-                // Forzar cierre del browser y volver a la app!!!!!!
-
 
                 return
             }
@@ -84,7 +82,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
-        ApiClient().close() // <- Cierra el cliente aquí
+        ApiClient().close()
         Log.d("[APP]", "HttpClient cerrado")
     }
 
@@ -93,10 +91,7 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    // Crea un ViewModel de prueba
     val viewModel = ProfileViewModel()
-
-    // Llama a App con el ViewModel de prueba
     App(viewModel)
 }
 

@@ -3,7 +3,7 @@ import shared
 
 struct SkillsView: View {
     @EnvironmentObject private var viewModel: ProfileViewModel
-    @Binding var navigationPath: NavigationPath // <- Recibe el path
+    @Binding var navigationPath: NavigationPath // Recibe el path
 
     private let customYellow = Color(red: 1.0, green: 0.988, blue: 0.0)
 

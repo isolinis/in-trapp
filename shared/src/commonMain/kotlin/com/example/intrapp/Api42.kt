@@ -12,7 +12,7 @@ import com.example.intrapp.BuildKonfig
 class Api42() {
 
 
-    // Credenciales y URLs
+    // Credenciales y URLs (desde .env)
     private val client_id: String = BuildKonfig.CLIENT_ID.trim()
     private val redirect_uri: String = BuildKonfig.REDIRECT_URI.trim()
     private val client_secret: String = BuildKonfig.CLIENT_SECRET.trim()
@@ -34,7 +34,7 @@ class Api42() {
 
         println("[API42] Handlecallback(code: $code)")
 
-        //NECESITAMOS HACER LO DE LOS STATE , strings random para mas seguridad
+        //State, strings random para mas seguridad
         val state: String = ""
 
         try {
@@ -47,9 +47,6 @@ class Api42() {
 
 
         } catch (e: Exception) {
-            //limpiar Sessionmanager ???
-
-            // Log del error
             println("[API42] Error en handleCallback: ${e.message}")
             throw e
         }
@@ -107,7 +104,7 @@ class Api42() {
         val token = SessionManager.access_token ?: throw Exception("Access token no disponible")
 
         val response: HttpResponse? =
-            ApiClient().getWithAuth( // <- Usar getWithAuth en lugar de get
+            ApiClient().getWithAuth(
                 url = "https://api.intra.42.fr/v2/me",
                 headers = emptyMap(),
                 api42 = this // Pasar la instancia actual de Api42
@@ -194,7 +191,7 @@ class Api42() {
             } catch (e: Exception) {
                 SessionManager.userProfile?.projects =
                     emptyList() //Limpiar projects en caso de error
-                throw e // Propagar el error
+                throw e
             }
         }
     }

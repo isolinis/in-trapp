@@ -69,7 +69,7 @@ struct VerticalCarouselView: View {
                                 dragOffset = 0
                             }
 
-                            // Añadir un pequeño retardo antes de permitir más gestos
+                            // Pequeño retardo antes de permitir más gestos
                             //DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                             //    animating = false
                             //}

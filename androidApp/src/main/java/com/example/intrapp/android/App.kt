@@ -70,7 +70,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowLeft
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.text.style.TextOverflow
 import kotlinx.coroutines.CoroutineScope
@@ -100,8 +99,8 @@ fun App(viewModel: ProfileViewModel) {
                 }
             }
             else -> {
-            //este cacho no tienen mucho sentido no? nunca va a pasar, se quedaria en loading eternamente  porque profileloaded no cambiaria su sestado
-            // MANEJO DE ERROR CON UN TIEMOUT en Loadingscreen
+            // Nunca va a pasar, se quedaria en loading (profileloaded no cambiaria su estado)
+            // Loading gestiona el timeout propiamente para navegar
             }
         }
     }
@@ -158,10 +157,11 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 
     MaterialTheme {
 
-        //VIDEO FONDO // Usa el @componente VideoPlayer
+        //VIDEO FONDO
 
         Box(modifier = Modifier.fillMaxSize().padding(0.dp)) {
 
+            // Usa el @componente VideoPlayer
             VideoPlayer(
                 videoFileName = "loginvideo.mp4",
                 modifier = Modifier.fillMaxSize(),
@@ -170,7 +170,7 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
             )
             if (videoFinished) {
 
-                //BOTON
+        //BOTON
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.BottomEnd // Alinear en la esquina inferior derecha
@@ -216,7 +216,6 @@ fun LoginScreen(navController: NavController, viewModel: ProfileViewModel) {
 
 @Composable
 fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
-    val profileLoaded by viewModel.profileLoaded.collectAsState()
     val profile = SessionManager.userProfile
 
     // Si no hay perfil, redirigir
@@ -229,13 +228,14 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
         return LoadingScreen()
     }
 
-    // Aumenté el lineHeight y añadí más espacio entre elementos
+    //STYLES
+
     val profileTextStyle = TextStyle(
         color = Color.White,
         fontSize = 20.sp,
         fontFamily = FontFamily.Default,
         letterSpacing = 0.5.sp,
-        lineHeight = 28.sp // Aumentado de 24 a 28.sp
+        lineHeight = 28.sp
     )
 
     MaterialTheme {
@@ -252,7 +252,6 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.SpaceBetween
             ) {
-                // Sección superior
                 Column(
                     modifier = Modifier
                         .weight(1f)
@@ -260,7 +259,8 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    // Avatar (250.dp)
+
+    // AVATAR
                     Box(
                         modifier = Modifier
                             .size(250.dp)
@@ -278,7 +278,8 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    // Información con más espacio entre líneas
+    // PROFILE INFO
+
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp) // Aumentado de 8 a 12.dp
@@ -312,7 +313,8 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                     }
                 }
 
-                // BOTONES
+    // BOTONES
+
                 Column(
                     modifier = Modifier
                         .fillMaxWidth(0.9f)
@@ -343,7 +345,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                             modifier = Modifier.padding(8.dp)
                         )
                     }
+
                     // Botón SKILLS
+
                     Button(
                         onClick = {
                             // Crea un scope de corrutina
@@ -375,6 +379,7 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
                     }
 
                     // Botón LOGOUT
+
                     Box(
                         modifier = Modifier
                             .clickable {
@@ -414,8 +419,9 @@ fun ProfileScreen(navController: NavController, viewModel: ProfileViewModel) {
 @Composable
 fun LoadingScreen(onTimeout: () -> Unit = {}) {
 
+    // TIMEOUT
     LaunchedEffect(Unit) {
-        delay(3000) // 30 segundos timeout y fuera
+        delay(3000)
         onTimeout()
     }
 
@@ -436,24 +442,23 @@ fun LoadingScreen(onTimeout: () -> Unit = {}) {
 @Composable
 fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
 
-    // Observar el estado de carga de proyectos
+    // ESTADOS OBSERVABLES
+
     val projectsLoaded by viewModel.projectsLoaded.collectAsState()
+    var showError by remember { mutableStateOf(false) }
+    var isFullyVisible by remember { mutableStateOf(false) }
 
     // Obtener los proyectos desde SessionManager
     val projects = SessionManager.userProfile?.projects
 
-    var showError by remember { mutableStateOf(false) }
-
-    //Estado para controlar la visibilidad durante la navegación
-    var isFullyVisible by remember { mutableStateOf(false) }
-
+    // Asegurar que la pantalla esté completamente visible antes de mostrar cualquier contenido, sino error
     LaunchedEffect(Unit) {
-        // Asegurar que la pantalla esté completamente visible antes de mostrar cualquier contenido
-        delay(100)  // Pequeño retraso para la transición
+
+        delay(100)
         isFullyVisible = true
 
-        // Temporizador para mostrar error si tarda demasiado
-        delay(5000) // 5 segundos
+
+        delay(5000)
         if (!projectsLoaded && projects == null) {
             showError = true
         }
@@ -474,10 +479,10 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
 
     MaterialTheme {
         Box(modifier = Modifier.fillMaxSize().background(Color(0xFFFFFC00))) {
-            // Solo mostrar contenido cuando la pantalla esté completamente visible
+
             if (isFullyVisible) {
                 when {
-                    // 1. Proyectos cargados
+                    //  Proyectos cargados OK -> PROJECTCARROUSEL
                     projects != null -> {
                         ScrollableCircularProjectCarousel(
                             projects = projects!!,
@@ -485,12 +490,12 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
                         )
                     }
 
-                    // 2. Mientras carga (primeros 5 segundos)
+                    //  Mientras carga loading
                     !showError -> {
                         LoadingScreen()
                     }
 
-                    // 3. Si pasa el timeout y no hay datos
+                    // Timeout KO y no hay datos:
                     else -> {
                         Column(
                             modifier = Modifier.fillMaxSize(),
@@ -523,12 +528,11 @@ fun ProjectsScreen(navController: NavController, viewModel: ProfileViewModel) {
                     }
                 }
             } else {
-                // Pantalla de transición durante la navegación
+                // Pantalla de transición durante la navegación (VACIA)
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    // Puedes poner aquí un indicador de carga o simplemente dejarlo vacío
                 }
             }
 
@@ -549,11 +553,9 @@ fun SelectedProjectScreen(
     projectId: Int // ID del proyecto seleccionado
 ) {
 
-    // Clave: Guardar el proyecto en una variable local cuando se monta el componente
     val projectSnapshot = remember(projectId) {
         SessionManager.userProfile?.projects?.find { it.project.id == projectId }
     }
-    //  Obtener proyectos solo mientras la pantalla está activa
     val project = SessionManager.userProfile?.projects?.find { it.project.id == projectId }
 
 
@@ -572,6 +574,7 @@ fun SelectedProjectScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
+                    // PROJECT TITLE
                     Box(
                         modifier = Modifier
                             .size(250.dp)
@@ -636,7 +639,6 @@ fun SelectedProjectScreen(
         }
 
         //BOTON ATRAS
-
         ButtonBack(
             navController = navController,
             modifier = Modifier
@@ -655,10 +657,10 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
     val circleHeight = 80.dp
     val padding = 12.dp
 
-    // Para centrar
+    //STYLES
     val spacerHeight = (screenHeight - itemHeight) / 2
 
-    // Calcular el índice para el seleccionado
+    // Calcular el seleccionado
     val centerIndex by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
@@ -688,7 +690,8 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
             .fillMaxSize()
             .background(Color.Yellow)
     ) {
-        // LazyColumn para los proyectos en carrusel
+
+    // CARRUSEL
         LazyColumn(
             state = listState,
             modifier = Modifier.fillMaxWidth(),
@@ -749,7 +752,6 @@ fun ScrollableCircularProjectCarousel(projects: List<Project>, navController: Na
         }
     }
 
-    // Efecto para desplazarse al primer ítem (índice 0)
     LaunchedEffect(projects) {
         if (projects.isNotEmpty()) {
             // Empezar con el primer proyecto seleccionado (índice 0)
@@ -765,7 +767,6 @@ fun SkillsScreen(
 ) {
     val userProfile = SessionManager.userProfile
 
-    // Verificamos si hay un perfil cargado
     if (userProfile == null) {
         Box(
             modifier = Modifier
@@ -783,7 +784,7 @@ fun SkillsScreen(
         return
     }
 
-    // Obtenemos las skills del cursus principal (42cursus - id: 21)
+    // Obtener Skills (42cursus - id: 21)
     val mainCursusSkills = userProfile.cursus_users
         .firstOrNull { it.cursus.id == 21 }
         ?.skills.orEmpty()
@@ -807,8 +808,8 @@ fun SkillsScreen(
                 .padding(top = 16.dp, bottom = 24.dp)
         )
 
+        // Si no hay skills
         if (mainCursusSkills.isEmpty()) {
-            // Si no hay skills, mostramos un mensaje
             Box(
                 modifier = Modifier
                     .fillMaxSize()
@@ -822,13 +823,14 @@ fun SkillsScreen(
                 )
             }
         } else {
-            // Si hay skills, mostramos las barras verticales
+
             Box(
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth()
             ) {
-                // BARRAS
+
+        // BARRAS DE SKILLS
                 LazyRow(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(24.dp), // Más espacio entre barras
@@ -843,7 +845,7 @@ fun SkillsScreen(
             }
         }
 
-        // Botón para volver al perfil - con más margen inferior
+        // BOTON ATRAS
         Button(
             onClick = { navController.popBackStack() },
             modifier = Modifier
@@ -885,7 +887,6 @@ fun VerticalSkillItem(name: String, percentage: Int) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.width(100.dp) // Barras más anchas (para que entren ~3 por pantalla)
     ) {
-        // Contenedor de la barra - más ancho
         Box(
             modifier = Modifier
                 .width(70.dp) // Barra más gruesa
@@ -893,7 +894,7 @@ fun VerticalSkillItem(name: String, percentage: Int) {
                 .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                 .background(Color.DarkGray)
         ) {
-            // Barra animada que se llena desde abajo
+            // ANIMACION
             Box(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
@@ -902,7 +903,7 @@ fun VerticalSkillItem(name: String, percentage: Int) {
                     .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
                     .background(Color.Black)
             ) {
-                // Porcentaje en la parte superior de la barra de progreso
+                // PORCENTAJE
                 if (percentage > 10) {
                     Text(
                         text = "$percentage%",
@@ -917,7 +918,7 @@ fun VerticalSkillItem(name: String, percentage: Int) {
             }
         }
 
-        // Nombre de la skill debajo de la barra
+        // SKILL TITLE
         Text(
             text = name,
             color = Color.Black,
@@ -959,7 +960,6 @@ fun ButtonBack(navController: NavController, modifier: Modifier = Modifier) {
 
 @Composable
 fun ProgressBar(level: Double, maxLevel: Int = 21, modifier: Modifier = Modifier) {
-    // Calculamos el progreso como el nivel dividido por el nivel máximo
     val progress = level.toFloat() / maxLevel.toFloat()
 
     //BARRA GRIS

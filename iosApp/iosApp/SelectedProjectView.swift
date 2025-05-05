@@ -69,7 +69,7 @@ struct SelectedProjectView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
 
-            // Botón de volver
+            // Botón atras
             Button(action: {
                 navigationPath.removeLast()
             }) {

@@ -9,16 +9,16 @@ struct ProfileView: View {
     private let customYellow = Color(red: 1.0, green: 0.988, blue: 0.0)
     private let customBlack = Color.black
 
-    // Tamaños definitivos
+    // Styles
     private let avatarSize: CGFloat = 220
     private let buttonHeight: CGFloat = 50
-    private let logoutButtonSize: CGFloat = 100  // Tamaño aumentado
+    private let logoutButtonSize: CGFloat = 100
     private let horizontalPadding: CGFloat = 40
-    private let buttonSpacing: CGFloat = 40      // Espaciado duplicado entre botones
+    private let buttonSpacing: CGFloat = 40
 
     var body: some View {
 
-    // Protección contra perfil nulo (sin cambiar lógica)
+    // Protección contra perfil nulo
     if SessionManager.shared.userProfile == nil {
         EmptyView()
             .onAppear {
@@ -31,7 +31,7 @@ struct ProfileView: View {
 
             GeometryReader { geometry in
                     VStack(spacing: 0) {
-                        // 1. BLOQUE AVATAR (con espacio inferior añadido)
+                        //  AVATAR
                         VStack {
                             ZStack {
                                 Circle()
@@ -58,12 +58,12 @@ struct ProfileView: View {
                             .padding(.bottom, 30)
                         }
                         .padding(.top, UIApplication.shared.windows.first?.safeAreaInsets.top ?? 0)
-                        .padding(.bottom, 30)  // Espacio añadido entre avatar e info
+                        .padding(.bottom, 30)
 
-                        // 2. BLOQUE INFO (con login visible)
+                        //  INFO
                         VStack(spacing: 12) {
                             if let profile = profile {
-                                Text(profile.login)  // Login visible aquí
+                                Text(profile.login)
                                     .font(.system(size: 22, weight: .bold))
                                     .padding(.bottom, 4)
 
@@ -86,7 +86,7 @@ struct ProfileView: View {
                         .padding(.bottom, 50)
 
 
-                        // 3. BLOQUE BOTONES
+                        // BOTONES
                         VStack(spacing: 30) {
                             customButton(
                                 title: "PROJECTS",
@@ -105,20 +105,20 @@ struct ProfileView: View {
 
 
 
-                            // Botón LOGOUT (más grande)
+                            // Botón LOGOUT
                             Button(action: {
-                                // 1. Resetear ViewModel (sin lógica nueva)
+                                // 1. Resetear ViewModel
                                     viewModel.profileLoaded = false
 
-                                    // 2. Limpiar sesión (existente)
+                                    // 2. Limpiar sesión
                                     SessionManager.shared.clearSession()
 
-                                    // 3. Navegar a login (mismo método que ya usas)
+                                    // 3. Navegar a login
                                     navigationPath.removeLast(navigationPath.count)
                                     navigationPath.append("login")
                             }) {
                                 Text("LOG OUT")
-                                    .font(.system(size: 16, weight: .black))  // Texto más grande
+                                    .font(.system(size: 16, weight: .black))
                                     .frame(width: logoutButtonSize, height: logoutButtonSize)
                                     .background(customYellow)
                                     .clipShape(Circle())
@@ -128,7 +128,7 @@ struct ProfileView: View {
                                     )
                             }
                             .foregroundColor(customBlack)
-                            .padding(.bottom, 30)  // Margen inferior seguro
+                            .padding(.bottom, 30)
                         }
                         .padding(.horizontal,40)
                         .padding(.bottom, 50)
@@ -142,7 +142,7 @@ struct ProfileView: View {
         }
     }
 
-    // Función para botones custom (con padding interno)
+    // Función para botones custom
     private func customButton(title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)

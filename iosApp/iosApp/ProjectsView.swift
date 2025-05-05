@@ -29,7 +29,7 @@ struct ProjectsView: View {
                 }
             }
 
-            // Botón de volver
+            // Botón Atras
             Button(action: {
                 navigationPath.removeLast()
             }) {
