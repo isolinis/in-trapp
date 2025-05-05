@@ -1,4 +1,3 @@
-import org.gradle.internal.impldep.org.junit.experimental.categories.Categories.CategoryFilter.exclude
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 
@@ -10,6 +9,54 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.compose.compiler)
     kotlin("plugin.serialization") version "2.0.0"
+    id("com.codingfeline.buildkonfig") version "0.15.1"
+
+}
+// Leer variables desde archivo .env
+val envFile = rootProject.file(".env")
+val envVars = mutableMapOf<String, String>()
+
+if (envFile.exists()) {
+    println("Leyendo archivo .env...")
+    envFile.readLines().forEach { line ->
+        if (!line.startsWith("#") && line.contains("=")) {
+            val (key, value) = line.split("=", limit = 2)
+            envVars[key.trim()] = value.trim()
+            println("Variable cargada: $key")
+        }
+    }
+} else {
+    println("Archivo .env no encontrado en: ${envFile.absolutePath}")
+}
+
+// Función para obtener variables desde diferentes fuentes
+fun getEnvVar(name: String, defaultValue: String = ""): String {
+    return envVars[name] ?: findProperty(name)?.toString() ?: System.getenv(name) ?: defaultValue
+}
+
+buildkonfig {
+    packageName = "com.example.intrapp"
+
+    defaultConfigs {
+        buildConfigField(
+            type = com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
+            name = "CLIENT_ID",
+            value = getEnvVar("CLIENT_ID"),
+            const = true
+        )
+        buildConfigField(
+            type = com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
+            name = "CLIENT_SECRET",
+            value = getEnvVar("CLIENT_SECRET"),
+            const = true
+        )
+        buildConfigField(
+            type = com.codingfeline.buildkonfig.compiler.FieldSpec.Type.STRING,
+            name = "REDIRECT_URI",
+            value = getEnvVar("REDIRECT_URI", "intrap://auth/callback"),
+            const = true
+        )
+    }
 }
 
 kotlin {

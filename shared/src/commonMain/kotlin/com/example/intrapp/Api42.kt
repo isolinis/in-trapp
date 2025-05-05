@@ -2,28 +2,27 @@ package com.example.intrapp
 
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.http.HttpHeaders
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.float
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import com.example.intrapp.BuildKonfig
 
-//@OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 class Api42() {
 
+
     // Credenciales y URLs
-    private val client_id: String =
-        "u-s4t2ud-77006aca79f5d7f31a8a47f1ee21aaae7419d2fe992e37ad80c1877ba879de6e"
-    private val redirect_uri: String = "intrap://auth/callback"
-    private val client_secret: String =
-        "s-s4t2ud-280599cb78eb2331a0adfeb3eff19f214536d9bda5910d495c387a3834955146000"
-    private val uri: String =
-        "https://api.intra.42.fr/oauth/authorize?client_id=${client_id}&redirect_uri=${redirect_uri}&response_type=code"
+    private val client_id: String = BuildKonfig.CLIENT_ID.trim()
+    private val redirect_uri: String = BuildKonfig.REDIRECT_URI.trim()
+    private val client_secret: String = BuildKonfig.CLIENT_SECRET.trim()
+    private val uri: String = "https://api.intra.42.fr/oauth/authorize?client_id=$client_id&redirect_uri=$redirect_uri&response_type=code"
+
+    init {
+        println("[API42] client_id: '$client_id'")
+        println("[API42] redirect_uri: '$redirect_uri'")
+        println("[API42] URI completa: $uri")
+    }
 
     //Devuelve URI de autorizacion de 42
     fun getURI(): String {
